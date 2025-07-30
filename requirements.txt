@@ -7,3 +7,4 @@ Unidecode
 plotly
 geopy
 openpyxl
+vl-convert-python
