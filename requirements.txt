@@ -3,7 +3,6 @@ altair
 streamlit-option-menu
 python-dotenv
 dotenv
-psycopg2
 Unidecode
 plotly
 geopy
