@@ -163,7 +163,7 @@ def get_tipos_visitas_rvt(df_rvt, mes, ano):
     chart = (donut + text + center_text).properties(
         title="Visitas Preventivas e Corretivas" 
     )
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([3,1])
     with col1:
         st.altair_chart(chart.configure(background='#ffffff00').properties(width=650, height=330), use_container_width=False)
     with col2:
@@ -251,7 +251,7 @@ def get_qtd_quality(df_rvt, mes, ano):
         title="Quality Reviews Cliente e Planta" 
     )
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([3,1])
     with col1:
         st.altair_chart(chart.configure(background='#ffffff00').properties(width=650, height=330), use_container_width=False)
     with col2:
