@@ -10,9 +10,6 @@ load_dotenv()
 from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas
 from service.connections import processar_arquivos_carregados
 
-
-
-
 def check_password():
     with st.form("password_form"):
         password = st.text_input("Password", type="password")
@@ -71,18 +68,14 @@ if(login_inicio_c or login_inicio_g):
             accept_multiple_files=True
         )
         
-        if uploaded_files:
-            # Chama a função que APENAS processa os arquivos
+        if uploaded_files and len(uploaded_files) == 4:
             dados = processar_arquivos_carregados(uploaded_files)
             
             if dados:
-                # Armazena os dados no estado da sessão! Esta é a chave!
                 st.session_state.dados_carregados = dados
                 st.success("Arquivos carregados e processados com sucesso!")
-                # Força a re-execução para esconder o uploader e mostrar o resto da app
                 st.rerun() 
 
-    # O resto da sua aplicação só roda DEPOIS que os dados estão na sessão.
     if 'dados_carregados' in st.session_state:
         
         df_noc = st.session_state.dados_carregados.get('df_noc')
@@ -701,4 +694,4 @@ if(login_inicio_c or login_inicio_g):
             # st.image(image=latinha)
 
     else:
-        st.warning("faça o upload dos arquivos")
+        st.warning("faça o upload 4 dos arquivos da pasta")
