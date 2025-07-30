@@ -290,10 +290,11 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
     
         mascara_filtragem = df_filtrado['Clientes'].str.lower().isin(clientes_permitidos)
 
-        df_filtrado_2 = df_filtrado[mascara_filtragem]
         st.write(f"Incidentes - {ka} - {mes_anteriores}/{ano}")
+        df_filtrado_2 = df_filtrado[mascara_filtragem]
+        df_filtrado_3 = df_filtrado_2[df_filtrado_2["Status"] != "CANCELADA"]
         
-        st.dataframe(df_filtrado_2)
+        st.dataframe(df_filtrado_3)
 
     source = incidentes_anteriores[ka]
     df_source = pd.DataFrame(list(source.items()), columns=['Mês', 'Incidentes'])
