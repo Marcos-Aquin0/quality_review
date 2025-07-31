@@ -10,6 +10,7 @@ load_dotenv()
 from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas
 from service.connections import processar_arquivos_carregados
 
+
 def check_password():
     with st.form("password_form"):
         password = st.text_input("Password", type="password")
@@ -61,7 +62,6 @@ if(login_inicio_c or login_inicio_g):
     if 'dados_carregados' not in st.session_state:
         st.header("1. Carregar Arquivos")
         
-        # Permite o upload de múltiplos arquivos
         uploaded_files = st.file_uploader(
             "Navegue até a pasta \\16 - SERVIÇO AO CLIENTE\\08. SVC - Gestão\\13. Estagiários\\Conexões, e selecione todos os arquivos",
             type=['xlsx'],
@@ -105,14 +105,14 @@ if(login_inicio_c or login_inicio_g):
 
         if(login_inicio_g):
             with st.sidebar:
-                selecao_side_bar = option_menu("Menu", ["Salesforce", 'RessarceBall', 'Relação NOC_RVT', 'Supervisores', 'Analistas', 'Especialistas', 'Key Accounts', 'Onde estivemos',  'CTS - Gerentes', 'Chat - Latinha'], 
-                    icons=['cloud', 'coin', 'search', 'list', 'list', 'list', 'list', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
+                selecao_side_bar = option_menu("Menu", ["Salesforce", 'RessarceBall', 'Relação NOC_RVT', 'Buscar NOC', 'Supervisores', 'Analistas', 'Especialistas', 'Key Accounts', 'Onde estivemos',  'CTS - Gerentes', 'Chat - Latinha'], 
+                    icons=['cloud', 'coin', 'search', 'search', 'list', 'list', 'list', 'list', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
                 st.info("Para recarregar a página basta clicar R")
         elif (login_inicio_c):
             with st.sidebar:
-                selecao_side_bar = option_menu("Menu", ["Salesforce", 'RessarceBall', 'Relação NOC_RVT', 'Supervisores', 'Analistas', 'Especialistas', 'Key Accounts', 'Onde estivemos', 'Chat - Latinha'], 
-                    icons=['cloud', 'coin', 'search', 'list', 'list', 'list', 'list', 'map', 'chat'], menu_icon="cast", default_index=0,
+                selecao_side_bar = option_menu("Menu", ["Salesforce", 'RessarceBall', 'Relação NOC_RVT', 'Buscar NOC', 'Supervisores', 'Analistas', 'Especialistas', 'Key Accounts', 'Onde estivemos', 'Chat - Latinha'], 
+                    icons=['cloud', 'coin', 'search', 'search', 'list', 'list', 'list', 'list', 'map', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
                 st.info("Para recarregar a página basta clicar R")
                 
@@ -322,6 +322,25 @@ if(login_inicio_c or login_inicio_g):
                                 manter_col = ["NR (Relação NOC e RVT)", "Data Criação NR", "Numero NOC", "NOC.DataRecebimentoSAC", "NOC.DataCriacao", "Numero RVT", "Data Criação RVT"]
                                 st.dataframe(linhas_rvt.drop(columns=[col for col in df_consulta if col not in manter_col]))
 
+        elif selecao_side_bar == "Buscar NOC":
+            with st.container(border=True):
+                    st.subheader("Consulte a NOC em todos os bancos (Salesforce e RessarceBall) para saber mais detalhes: ")
+                    noc_pesquisada = st.text_input("NOC:", placeholder="XXXXX")
+                    if(noc_pesquisada):
+                        for local, df_local in dfs_ressarceball.items():
+                            df_filtro_noc = df_local[df_local['Numero NOC'].astype(int) == int(noc_pesquisada)]
+                        
+                            if not df_filtro_noc.empty:
+                                st.write(local)
+                                st.dataframe(df_filtro_noc)
+                        for local, df_local in dfs_salesforce.items():
+                            if local == 'NOCs Salesforce':
+                                df_filtro_noc = df_local[df_local['Numero NOC'].astype(int) == int(noc_pesquisada)]
+                            
+                                if not df_filtro_noc.empty:
+                                    st.write(local)
+                                    st.dataframe(df_filtro_noc)
+
         elif selecao_side_bar == "Supervisores":
             
             periodo = menu_mensal()
@@ -377,26 +396,7 @@ if(login_inicio_c or login_inicio_g):
                     df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
                     st.info(f"Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas a partir do mês 1/{ano} até o mês {mes}/{ano} selecionado para o supervisor {nome}")        
                     st.dataframe(df_filtro_sup_ytd)
-                    get_tempo_resposta(df_filtro_sup_ytd)
-
-                with st.container(border=True):
-                    st.subheader("Consulte a NOC para saber mais detalhes: ")
-                    noc_pesquisada = st.text_input("NOC:", placeholder="XXXXX")
-                    if(noc_pesquisada):
-                        for local, df_local in dfs_ressarceball.items():
-                            df_filtro_noc = df_local[df_local['Numero NOC'] == int(noc_pesquisada)]
-                        
-                            if not df_filtro_noc.empty:
-                                st.write(local)
-                                st.dataframe(df_filtro_noc)
-                        for local, df_local in dfs_salesforce.items():
-                            if local == 'NOCs Salesforce':
-                                df_filtro_noc = df_local[df_local['Numero NOC'] == int(noc_pesquisada)]
-                            
-                                if not df_filtro_noc.empty:
-                                    st.write(local)
-                                    st.dataframe(df_filtro_noc)
-                        
+                    get_tempo_resposta(df_filtro_sup_ytd)                       
                 
         elif selecao_side_bar == "Analistas":
             periodo = menu_mensal()
@@ -460,24 +460,6 @@ if(login_inicio_c or login_inicio_g):
                     st.info(f"Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas a partir do mês 1/{ano} até o mês {mes}/{ano} selecionado para o supervisor {nome}")        
                     st.dataframe(df_filtro_sup_ytd)
                     get_tempo_resposta(df_filtro_sup_ytd)
-
-                with st.container(border=True):
-                    st.subheader("Consulte a NOC para saber mais detalhes: ")
-                    noc_pesquisada = st.text_input("NOC:", placeholder="XXXXX")
-                    if(noc_pesquisada):
-                        for local, df_local in dfs_ressarceball.items():
-                            df_filtro_noc = df_local[df_local['Numero NOC'] == int(noc_pesquisada)]
-                        
-                            if not df_filtro_noc.empty:
-                                st.write(local)
-                                st.dataframe(df_filtro_noc)
-                        for local, df_local in dfs_salesforce.items():
-                            if local == 'NOCs Salesforce':
-                                df_filtro_noc = df_local[df_local['Numero NOC'] == int(noc_pesquisada)]
-                            
-                                if not df_filtro_noc.empty:
-                                    st.write(local)
-                                    st.dataframe(df_filtro_noc)
                 
         elif selecao_side_bar == "Key Accounts":
             periodo = menu_mensal()
@@ -537,25 +519,6 @@ if(login_inicio_c or login_inicio_g):
                     st.dataframe(df_filtro_ka_ytd)
                     st.dataframe(df_filtro_ka_ytd.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])    
                     get_tempo_resposta(df_filtro_ka_ytd)
-
-
-                with st.container(border=True):
-                    st.subheader("Consulte a NOC para saber mais detalhes: ")
-                    noc_pesquisada = st.text_input("NOC:", placeholder="XXXXX")
-                    if(noc_pesquisada):
-                        for local, df_local in dfs_ressarceball.items():
-                            df_filtro_noc = df_local[df_local['Numero NOC'] == int(noc_pesquisada)]
-                        
-                            if not df_filtro_noc.empty:
-                                st.write(local)
-                                st.dataframe(df_filtro_noc)
-                        for local, df_local in dfs_salesforce.items():
-                            if local == 'NOCs Salesforce':
-                                df_filtro_noc = df_local[df_local['Numero NOC'] == int(noc_pesquisada)]
-                            
-                                if not df_filtro_noc.empty:
-                                    st.write(local)
-                                    st.dataframe(df_filtro_noc)
                 
         elif selecao_side_bar == "Onde estivemos":
             st.info("Visualize em um mapa interativo todas as cidades já visitadas através das RVTs desde 2023")
@@ -694,4 +657,4 @@ if(login_inicio_c or login_inicio_g):
             # st.image(image=latinha)
 
     else:
-        st.warning("faça o upload 4 dos arquivos da pasta")
+        st.warning("faça o upload dos 4 arquivos na pasta")
