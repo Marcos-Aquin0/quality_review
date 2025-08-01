@@ -11,10 +11,32 @@ from geopy.extra.rate_limiter import RateLimiter
 import os
 import time
 import string
+import json
 
+@st.cache_data
+def load_translation(language):
+    """Carrega o arquivo JSON de tradução para o idioma selecionado."""
+    filepath = os.path.join("locale", f"{language}.json")
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+# Função para obter o texto traduzido
+def get_text(key, **kwargs):
+    """
+    Obtém o texto traduzido para uma chave específica.
+    Usa o idioma armazenado no session_state.
+    Permite a formatação de strings com .format().
+    """
+    lang = st.session_state.get("language", "pt") 
+    translations = load_translation(lang)
+    text = translations.get(key, f"Texto não encontrado para a chave: {key}")
+    if kwargs:
+        return text.format(**kwargs)
+    return text
 
 nocs_nao_cadastradas = []
-
 
 dict_meses = {
         1: "Jan",
@@ -57,7 +79,7 @@ def categorizar_divisao(cliente):
         for s in lista_de_strings:
             if cliente in s:  # ignora maiúsculas/minúsculas
                 return chave
-    st.info(f"{cliente} não classificado. Contate o administrador do sistema.")
+    st.info(get_text("unclassified_client_info", cliente=cliente))
     return 'outros'
 
 def filtrar_por_mes(df, campo_data, mes, ano):
@@ -167,7 +189,7 @@ def get_tipos_visitas_rvt(df_rvt, mes, ano):
     with col1:
         st.altair_chart(chart.configure(background='#ffffff00').properties(width=650, height=330), use_container_width=False)
     with col2:
-        st.info("Esse gráfico é para a apresentação QR Tarde, junto com o time de qualidade")
+        st.info(get_text("qr_afternoon_chart_info"))
 
 def get_qtd_treinamentos(df_rvt, mes, ano):
     divisoes = st.session_state.dados_carregados.get('divisoes')
@@ -209,7 +231,7 @@ def get_qtd_quality(df_rvt, mes, ano):
         indice +=1
     
     df_cidades_lista_datas = pd.DataFrame(list(cidades.items()), columns=['Plantas', 'Datas'])
-    st.write("Em quais plantas tivemos QR?")
+    st.write(get_text("qr_plants_write"))
     st.dataframe(df_cidades_lista_datas)
     
     source = pd.DataFrame({
@@ -255,7 +277,7 @@ def get_qtd_quality(df_rvt, mes, ano):
     with col1:
         st.altair_chart(chart.configure(background='#ffffff00').properties(width=650, height=330), use_container_width=False)
     with col2:
-        st.info("Esse gráfico é para a apresentação QR Tarde, junto com o time de qualidade")
+        st.info(get_text("qr_afternoon_chart_info"))
 
 def get_incidentes_por_divisao(df_noc, mes, ano):
     divisoes = st.session_state.dados_carregados.get('divisoes')
@@ -282,7 +304,7 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
         ka = st.selectbox("selecione um key account", options=[coluna for coluna in incidentes_anteriores.keys() if coluna != 'planta_ball' and coluna != 'outros'])
         
 
-    st.write("Aqui você pode avaliar os incidentes para cada mês e de acordo com a conta selecionada:")
+    st.write(get_text("evaluate_incidents_write"))
     for mes_anteriores in range(1, mes+1):
         df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes_anteriores, ano)
         
@@ -354,8 +376,8 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
         with cl2:
             st.altair_chart(chart_display.configure(background='#ffffff00'), use_container_width=False)
     with col3:
-        st.info("Esse gráfico deve ser colocado no slide de QR. Ao baixar como png, ele estará com as barras e os números brancos!")
-        st.info("O filtro está aplicado em DataRecebimentoSAC e a quantidade de Incidentes ignora as NOCs canceladas")
+        st.info(get_text("qr_slide_chart_info"))
+        st.info(get_text("filter_info"))
 
 def get_tempo_medio_primeiro_atendimento(df_noc, mes, ano): #parametro julia atendimento
     df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
@@ -785,7 +807,7 @@ def get_tempo_resposta(df_filtro):
     )
 
     # Exibe o DataFrame final e consolidado
-    st.info("Se a NOC está em alguma etapa do ressarceball que não é a Final, o tempo ficará como -. Se a NOC não entrou no ressarceball, será considerado a data de aprovação da investigação do salesforce")
+    st.info(get_text("ressarceball_time_info"))
     st.dataframe(df_nocs_tempo_resposta, hide_index=True)
 
     tempos = pd.to_numeric(df_nocs_tempo_resposta['Tempo de Resposta (dias)'], errors='coerce')
