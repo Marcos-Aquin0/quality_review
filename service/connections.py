@@ -2,16 +2,16 @@ import pandas as pd
 import streamlit as st
 import os
 
-def limpar_df(df, colunas_remover=[]):
+def limpar_df(df, colunas_remover=[], colunas_data=[]):
     st.write()
     date_columns = [col for col in df.columns if 'Data' in col]
-    if 'StatusFinal' in df.columns:
-        date_columns.append("StatusFinal")
+    if colunas_data:
+        date_columns.extend(colunas_data)
     df = pd.DataFrame(df)
     if(colunas_remover):
         df = df.drop(columns=colunas_remover)
     for col in date_columns:
-        df[col] = pd.to_datetime(df[col], format='mixed')
+        df[col] = pd.to_datetime(df[col], format='mixed', errors='raise')
         df[col] = df[col].dt.strftime('%d/%m/%Y')
     return df
 
@@ -61,19 +61,45 @@ def processar_arquivos_carregados(uploaded_files):
             dados_carregados["df_consulta"] = df_consulta
             
         elif(upload_file.name == 'Conexoes_RessarceBall.xlsx'):
-            df_r_brasil = pd.read_excel(upload_file, sheet_name="RES_Brasil")
+            df_r_brasil_1 = pd.read_excel(upload_file, sheet_name="RES_Brasil")
+            df_r_brasil = limpar_df(df_r_brasil_1, colunas_data=["Aprovação Gerente CTS em", "Emissão Gerente CTS em", "StatusFinal"])
             dados_carregados["df_r_brasil"] = df_r_brasil
             
-            df_d_brasil = pd.read_excel(upload_file, sheet_name="DEV_Brasil")
+            df_d_brasil_1 = pd.read_excel(upload_file, sheet_name="DEV_Brasil")
+            df_d_brasil = limpar_df(df_d_brasil_1, colunas_data=["StatusFinal"])
             dados_carregados["df_d_brasil"] = df_d_brasil
             
-            df_argentina = pd.read_excel(upload_file, sheet_name="Argentina")
+            df_argentina_1 = pd.read_excel(upload_file, sheet_name="Argentina")
+            colunas_data_1 = [col for col in df_argentina_1.columns if 'Preenchido em' in col]
+            colunas_data_2 = [col for col in df_argentina_1.columns if 'Preenchida em' in col]
+            colunas_data_3 = [col for col in df_argentina_1.columns if 'em:' in col]
+            colunas_data_4=["Fecha del Remito", "Devolução Criada em", "Fecha Retiro", "Emision Nota de Credito - Enviado em", "Enviado ao Cliente em", "StatusFinal"]
+            colunas_data_4.extend(colunas_data_1)
+            colunas_data_4.extend(colunas_data_2)
+            colunas_data_4.extend(colunas_data_3)
+            df_argentina = limpar_df(df_argentina_1, colunas_data=colunas_data_4)
             dados_carregados["df_argentina"] = df_argentina
             
-            df_chile = pd.read_excel(upload_file, sheet_name="Chile")
+            df_chile_1 = pd.read_excel(upload_file, sheet_name="Chile")
+            colunas_data_1 = [col for col in df_chile_1.columns if 'Preenchido em' in col]
+            colunas_data_2 = [col for col in df_chile_1.columns if 'Preenchida em' in col]
+            colunas_data_3 = [col for col in df_chile_1.columns if 'em:' in col]
+            colunas_data_4=["Fecha Retiro", "StatusFinal", "OV Emitida no SAP em"]
+            colunas_data_4.extend(colunas_data_1)
+            colunas_data_4.extend(colunas_data_2)
+            colunas_data_4.extend(colunas_data_3)
+            df_chile = limpar_df(df_chile_1, colunas_data=colunas_data_4) 
             dados_carregados["df_chile"] = df_chile
             
-            df_paraguai = pd.read_excel(upload_file, sheet_name="Paraguay")
+            df_paraguai_1 = pd.read_excel(upload_file, sheet_name="Paraguay")
+            colunas_data_1 = [col for col in df_paraguai_1.columns if 'Preenchido em' in col]
+            colunas_data_2 = [col for col in df_paraguai_1.columns if 'preenchida em' in col]
+            colunas_data_3 = [col for col in df_paraguai_1.columns if 'em:' in col]
+            colunas_data_4=["Solicitación criada en", "Fecha retiro", "StatusFinal", "Fecha del Remito", "Transporte solicitado en", "Recusado en", "Recibido en", "Emitida en"]
+            colunas_data_4.extend(colunas_data_1)
+            colunas_data_4.extend(colunas_data_2)
+            colunas_data_4.extend(colunas_data_3)
+            df_paraguai = limpar_df(df_paraguai_1, colunas_data=colunas_data_4) 
             dados_carregados["df_paraguai"] = df_paraguai
         
         
