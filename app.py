@@ -9,7 +9,7 @@ import json
 
 load_dotenv()
 
-from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text
+from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text, get_flow
 from service.connections import processar_arquivos_carregados
 
 
@@ -118,7 +118,7 @@ if(login_inicio_c or login_inicio_g):
 
         logo = str(os.getenv("logo"))
         st.logo(logo)
-        
+
         if(login_inicio_g):
             with st.sidebar:
                 menu_options_g = [
@@ -369,10 +369,12 @@ if(login_inicio_c or login_inicio_g):
                     if(noc_pesquisada):
                         for local, df_local in dfs_ressarceball.items():
                             df_filtro_noc = df_local[df_local['Numero NOC'].astype(int) == int(noc_pesquisada)]
-                        
+
                             if not df_filtro_noc.empty:
                                 st.write(local)
                                 st.dataframe(df_filtro_noc)
+                                get_flow(local, int(noc_pesquisada), df_filtro_noc.iloc[0])
+
                         for local, df_local in dfs_salesforce.items():
                             if local == 'NOCs Salesforce':
                                 df_filtro_noc = df_local[df_local['Numero NOC'].astype(int) == int(noc_pesquisada)]
