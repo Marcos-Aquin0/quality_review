@@ -1,0 +1,15 @@
+# Ignorar ambiente virtual
+.venv/
+
+# Ignorar arquivos de cache do Python
+**/__pycache__/
+*.pyc
+
+# Ignorar pasta de dados locais
+data/
+
+# Ignorar arquivos de variáveis de ambiente e segredos
+.env
+.streamlit/secrets.toml
+
+.devcontainer/
