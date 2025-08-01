@@ -8,3 +8,4 @@ plotly
 geopy
 openpyxl
 vl-convert-python
+streamlit-flow-component
