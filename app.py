@@ -4,17 +4,19 @@ import altair as alt
 from streamlit_option_menu import option_menu
 from dotenv import load_dotenv
 import os
+import json
+
 
 load_dotenv()
 
-from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas
+from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text
 from service.connections import processar_arquivos_carregados
 
 
 def check_password():
     with st.form("password_form"):
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Enter")
+        password = st.text_input(get_text("password_label"), type="password")
+        submitted = st.form_submit_button(get_text("enter_button"))
 
         if submitted and password == os.getenv("APP_PASSWORD_G"):
             st.session_state["password_correct_g"] = True
@@ -25,7 +27,7 @@ def check_password():
         elif submitted:
             st.session_state["password_correct_g"] = False
             st.session_state["password_correct_c"] = False
-            st.error("😕 Senha incorreta")
+            st.error(get_text("wrong_password_error"))
 
 if st.session_state.get("password_correct_g", False):
     login_inicio_g = 1
@@ -43,8 +45,8 @@ else:
         page_icon="📚", 
         layout='centered'
     )
-    st.title("Login QR Mensal")
-    st.warning("Por favor, insira a senha para acessar o app do Quality Review.")
+    st.title(get_text("login_title"))
+    st.warning(get_text("login_warning"))
     check_password()
 
 if(login_inicio_c or login_inicio_g):
@@ -53,11 +55,6 @@ if(login_inicio_c or login_inicio_g):
         page_icon="📚",
         layout="wide" 
     )
-    st.title("QUALITY REVIEW MENSAL")
-    st.write("Este é o app de relatório do Quality Review!")
-
-    logo = str(os.getenv("logo"))
-    st.logo(logo)
 
     if 'dados_carregados' not in st.session_state:
         st.header("1. Carregar Arquivos")
@@ -103,42 +100,86 @@ if(login_inicio_c or login_inicio_g):
             "RVTs Salesforce": st.session_state.dados_carregados.get('df_rvt')
         }
 
+        with st.sidebar:
+            st.header("Configurações")
+            
+            is_spanish = st.toggle(
+                "Idioma: 🇧🇷 / 🇪🇸", 
+                help="Alterne para mudar o idioma. Desligado = Português, Ligado = Español"
+            )
+            
+            if is_spanish:
+                st.session_state.language = "es"
+            else:
+                st.session_state.language = "pt"
+
+        st.title(get_text("main_title"))
+        st.write(get_text("app_intro"))
+
+        logo = str(os.getenv("logo"))
+        st.logo(logo)
+        
         if(login_inicio_g):
             with st.sidebar:
-                selecao_side_bar = option_menu("Menu", ["Salesforce", 'RessarceBall', 'Relação NOC_RVT', 'Buscar NOC', 'Supervisores', 'Analistas', 'Especialistas', 'Key Accounts', 'Onde estivemos',  'CTS - Gerentes', 'Chat - Latinha'], 
+                menu_options_g = [
+                    get_text("salesforce_section_title"), 
+                    get_text("ressarceball_section_title"), 
+                    get_text("noc_rvt_relation_section_title"), 
+                    get_text("search_noc_section_title"), 
+                    get_text("supervisors_section_title"), 
+                    get_text("analysts_section_title"), 
+                    get_text("specialists_section_title"), 
+                    get_text("key_accounts_section_title"), 
+                    get_text("where_weve_been_section_title"),  
+                    get_text("cts_managers_section_title"), 
+                    get_text("chat_section_title")
+                ]
+                selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_g, 
                     icons=['cloud', 'coin', 'search', 'search', 'list', 'list', 'list', 'list', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
-                st.info("Para recarregar a página basta clicar R")
+                st.info(get_text("sidebar_reload_info"))
         elif (login_inicio_c):
             with st.sidebar:
-                selecao_side_bar = option_menu("Menu", ["Salesforce", 'RessarceBall', 'Relação NOC_RVT', 'Buscar NOC', 'Supervisores', 'Analistas', 'Especialistas', 'Key Accounts', 'Onde estivemos', 'Chat - Latinha'], 
+                menu_options_c = [
+                    get_text("salesforce_section_title"), 
+                    get_text("ressarceball_section_title"), 
+                    get_text("noc_rvt_relation_section_title"), 
+                    get_text("search_noc_section_title"), 
+                    get_text("supervisors_section_title"), 
+                    get_text("analysts_section_title"), 
+                    get_text("specialists_section_title"), 
+                    get_text("key_accounts_section_title"), 
+                    get_text("where_weve_been_section_title"), 
+                    get_text("chat_section_title")
+                ]
+                selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_c, 
                     icons=['cloud', 'coin', 'search', 'search', 'list', 'list', 'list', 'list', 'map', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
-                st.info("Para recarregar a página basta clicar R")
+                st.info(get_text("sidebar_reload_info"))
                 
-        if selecao_side_bar == "Salesforce":
+        if selecao_side_bar == get_text("salesforce_section_title"):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
 
             with st.container(border=True):
-                st.subheader(f"Classificação de RVT por divisão - {mes}/{ano}")
+                st.subheader(get_text("rvt_classification_subheader", mes=mes, ano=ano))
                 get_visitas_por_divisao(df_rvt, mes, ano)
 
             with st.container(border=True):
-                st.subheader(f"Visitas Preventivas e Corretivas - {mes}/{ano}")
+                st.subheader(get_text("preventive_corrective_subheader", mes=mes, ano=ano))
                 get_tipos_visitas_rvt(df_rvt, mes, ano)
             
             with st.container(border=True):
-                st.subheader(f"Treinamentos - {mes}/{ano}")
+                st.subheader(get_text("training_subheader", mes=mes, ano=ano))
                 get_qtd_treinamentos(df_rvt, mes, ano)
 
             with st.container(border=True):
-                st.subheader(f"Quality Reviews - {mes}/{ano}")
+                st.subheader(get_text("quality_reviews_subheader", mes=mes, ano=ano))
                 get_qtd_quality(df_rvt, mes, ano)
 
             with st.container(border=True):
-                st.subheader(f"Incidentes - {mes}/{ano}")
+                st.subheader(get_text("incidents_subheader", mes=mes, ano=ano))
                 get_incidentes_por_divisao(df_noc, mes, ano)
 
             # with st.container(border=True):
@@ -149,14 +190,14 @@ if(login_inicio_c or login_inicio_g):
             #     with col2:
             #         st.info("A Data de Recebimento SAC não contém a hora exata de recebimento, apenas o dia, então existe uma margem de erro neste tempo")
             
-        elif selecao_side_bar == "RessarceBall":
+        elif selecao_side_bar == get_text("ressarceball_section_title"):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
             
             # investigação, devolução, bonificação, carta de crédito
-            st.subheader("RESSARCE BALL")
-            if(nocs_nao_cadastradas): st.info(f"NOCs {nocs_nao_cadastradas} não estão cadastradas no Salesforce")
+            st.subheader(get_text("ressarceball_title"))
+            if(nocs_nao_cadastradas): st.info(get_text("nocs_not_registered_info", nocs_nao_cadastradas=nocs_nao_cadastradas))
             tempo_resposta_niveis_br = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
 
             get_time_for_each_level(mes, ano, df_r_brasil, df_noc, 'Data da Ultima Modificação - Ressarcimento - Tipo de Ressarcimento', 'Investigação', tempo_resposta_niveis_br)
@@ -274,58 +315,57 @@ if(login_inicio_c or login_inicio_g):
 
             st.altair_chart(chart.configure(background='#ffffff00').properties(width=600, height=330), use_container_width=False)
 
-        elif selecao_side_bar == "Relação NOC_RVT":
-            
-            st.subheader("Relação NOC e RVT")
-            st.write("Consulte as NOCs e RVTs que possuem relações. Caso não possua, será emitido um alerta e seus dados mostrados a partir do banco de dados individual")
-            
+        elif selecao_side_bar == get_text("noc_rvt_relation_section_title"):
+            st.subheader(get_text("noc_rvt_relation_subheader"))
+            st.write(get_text("noc_rvt_relation_write"))
+
             st.dataframe(df_consulta)
             
             #buscar noc ou rvt na tabela de relação
             with st.container(border=True):
                 options = ["NOC", "RVT"]
                 select_rn = st.segmented_control(
-                    "Buscar Relação (Clique em NOC ou em RVT)", options, selection_mode="single"
+                    get_text("search_relation_label"), options, selection_mode="single"
                 )
                 if(select_rn):
                     if select_rn == "NOC": 
-                        buscaNOC = st.text_input("Digite o número da NOC no formato abaixo", placeholder="12345")
+                        buscaNOC = st.text_input(get_text("type_noc_number_label"), placeholder=get_text("noc_placeholder"))
                         if(buscaNOC):
                             linhas_noc = df_consulta.loc[df_consulta["Numero NOC"] == int(buscaNOC)]
                             if(linhas_noc.empty):
-                                st.write("NOC não possui RVT relacionada. Dados da NOC:")
+                                st.write(get_text("noc_has_no_rvt_write"))
                                 #buscar na tabela de noc
                                 linhas_noc = df_noc.loc[df_noc["Numero NOC"] == int(buscaNOC)]
                                 if(linhas_noc.empty):
-                                    st.write("NOC não cadastrada. Verifique o formato digitado ou consulte o administrador do sistema")
+                                    st.write(get_text("noc_not_registered_write"))
                                 else:
                                     st.dataframe(linhas_noc)
                             else:
-                                st.write("NOC encontrada. Possui RVT relacionada")
+                                st.write(get_text("noc_found_write"))
                                 manter_col = ["NR (Relação NOC e RVT)", "Data Criação NR", "Numero NOC", "NOC.DataRecebimentoSAC", "NOC.DataCriacao", "Numero RVT", "Data Criação RVT"]
                                 st.dataframe(linhas_noc.drop(columns=[col for col in df_consulta if col not in manter_col]))
 
                     else: 
-                        buscaRVT = st.text_input("Digite o número da RVT no formato abaixo", placeholder="RVT00000XXXX")
+                        buscaRVT = st.text_input(get_text("type_rvt_number_label"), placeholder=get_text("rvt_placeholder"))
                         if(buscaRVT):
                             linhas_rvt = df_consulta.loc[df_consulta["Numero RVT"] == buscaRVT]
                             if(linhas_rvt.empty):
-                                st.write("RVT não possui NOC relacionada. Dados da RVT:")
+                                st.write(get_text("rvt_has_no_noc_write"))
                                 #buscar na tabela de noc
                                 linhas_rvt = df_rvt.loc[df_rvt["Numero RVT"] == buscaRVT]
                                 if(linhas_rvt.empty):
-                                    st.write("RVT não cadastrada. Verifique o formato digitado ou consulte o administrador do sistema")
+                                    st.write(get_text("rvt_not_registered_write"))
                                 else:
                                     st.dataframe(linhas_rvt)
                             else:
-                                st.write("RVT encontrada. Possui NOC relacionada")
+                                st.write(get_text("rvt_found_write"))
                                 manter_col = ["NR (Relação NOC e RVT)", "Data Criação NR", "Numero NOC", "NOC.DataRecebimentoSAC", "NOC.DataCriacao", "Numero RVT", "Data Criação RVT"]
                                 st.dataframe(linhas_rvt.drop(columns=[col for col in df_consulta if col not in manter_col]))
 
-        elif selecao_side_bar == "Buscar NOC":
+        elif selecao_side_bar == get_text("search_noc_section_title"):
             with st.container(border=True):
-                    st.subheader("Consulte a NOC em todos os bancos (Salesforce e RessarceBall) para saber mais detalhes: ")
-                    noc_pesquisada = st.text_input("NOC:", placeholder="XXXXX")
+                    st.subheader(get_text("search_noc_subheader"))
+                    noc_pesquisada = st.text_input(get_text("noc_search_input_label"), placeholder=get_text("noc_search_input_placeholder"))
                     if(noc_pesquisada):
                         for local, df_local in dfs_ressarceball.items():
                             df_filtro_noc = df_local[df_local['Numero NOC'].astype(int) == int(noc_pesquisada)]
@@ -341,7 +381,7 @@ if(login_inicio_c or login_inicio_g):
                                     st.write(local)
                                     st.dataframe(df_filtro_noc)
 
-        elif selecao_side_bar == "Supervisores":
+        elif selecao_side_bar == get_text("supervisors_section_title"):
             
             periodo = menu_mensal()
             mes = periodo[0]
@@ -379,26 +419,26 @@ if(login_inicio_c or login_inicio_g):
                         st.image(imagem2)
                     df_filtro_sup = df_filtrado_aprovacao[df_filtrado_aprovacao['Supervisores'] == filtro_sup] 
                     with col2:
-                        st.info(f"Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas no período {mes}/{ano} para o supervisor {nome}")
+                        st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="supervisor"))
                         st.dataframe(df_filtro_sup)
 
                 with st.container(border=True):
-                    st.subheader(f"Tempo de resposta - {mes}/{ano}")
+                    st.subheader(get_text("response_time_subheader", mes=mes, ano=ano))
                     get_tempo_resposta(df_filtro_sup)
 
                 with st.container(border=True):
-                    st.subheader("Tempo de resposta - YTD")
+                    st.subheader(get_text("ytd_response_time_subheader"))
                     df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
                     df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
                     df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
                     df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
                     df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
                     df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
-                    st.info(f"Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas a partir do mês 1/{ano} até o mês {mes}/{ano} selecionado para o supervisor {nome}")        
+                    st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="supervisor"))
                     st.dataframe(df_filtro_sup_ytd)
                     get_tempo_resposta(df_filtro_sup_ytd)                       
                 
-        elif selecao_side_bar == "Analistas":
+        elif selecao_side_bar == get_text("analysts_section_title"):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
@@ -408,7 +448,7 @@ if(login_inicio_c or login_inicio_g):
             # )
             st.write("Em breve...")
 
-        elif selecao_side_bar == "Especialistas":
+        elif selecao_side_bar == get_text("specialists_section_title"):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
@@ -441,27 +481,27 @@ if(login_inicio_c or login_inicio_g):
                         
                         st.image(imagem2)
                     with col2:
-                        st.info(f"Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas no período {mes}/{ano} para o supervisor {nome}")
+                        st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
                         df_filtro_sup = df_filtrado_aprovacao[df_filtrado_aprovacao['Supervisores'] == filtro_sup] 
                         st.dataframe(df_filtro_sup)
 
                 with st.container(border=True):
-                    st.subheader(f"Tempo de resposta - {mes}/{ano}")
+                    st.subheader(get_text("response_time_subheader", mes=mes, ano=ano))
                     get_tempo_resposta(df_filtro_sup)
 
                 with st.container(border=True):
-                    st.subheader("Tempo de resposta - YTD")
+                    st.subheader(get_text("ytd_response_time_subheader"))
                     df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
                     df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
                     df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
                     df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
                     df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
                     df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
-                    st.info(f"Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas a partir do mês 1/{ano} até o mês {mes}/{ano} selecionado para o supervisor {nome}")        
+                    st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
                     st.dataframe(df_filtro_sup_ytd)
                     get_tempo_resposta(df_filtro_sup_ytd)
                 
-        elif selecao_side_bar == "Key Accounts":
+        elif selecao_side_bar == get_text("key_accounts_section_title"):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
@@ -471,7 +511,7 @@ if(login_inicio_c or login_inicio_g):
                 "Key Accounts", options, selection_mode="single"
             )
             
-            st.write("Clientes por Key Account")
+            st.write(get_text("key_accounts_clients_write"))
             df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
             df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
             df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
@@ -500,7 +540,7 @@ if(login_inicio_c or login_inicio_g):
                     df_filtro_ka = df_filtrado_aprovacao[df_filtrado_aprovacao['Clientes'].isin(lista_em_maiusculo)]
                     st.dataframe(df_filtro_ka.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])
                     with col2:
-                        st.info(f"Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas no período {mes}/{ano} para a KA {selection}")
+                        st.info(get_text("month_info_text", mes=mes, ano=ano, selection=selection, role="ka"))
                         st.dataframe(df_filtro_ka)
                 
                 with st.container(border=True):
@@ -515,13 +555,13 @@ if(login_inicio_c or login_inicio_g):
                     df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
                     df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
                     df_filtro_ka_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Clientes'].isin(lista_em_maiusculo)]
-                    st.info(f"Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas a partir do mês 1/{ano} até o mês {mes}/{ano} selecionado para o supervisor {nome}")        
+                    st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="ka"))
                     st.dataframe(df_filtro_ka_ytd)
                     st.dataframe(df_filtro_ka_ytd.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])    
                     get_tempo_resposta(df_filtro_ka_ytd)
                 
-        elif selecao_side_bar == "Onde estivemos":
-            st.info("Visualize em um mapa interativo todas as cidades já visitadas através das RVTs desde 2023")
+        elif selecao_side_bar == get_text("where_weve_been_section_title"):
+            st.info(get_text("where_weve_been_info"))
 
             complaints_data = divisoes_pesquisa
 
@@ -536,13 +576,13 @@ if(login_inicio_c or login_inicio_g):
                 
             get_mapa()
 
-            st.write('Em breve...')
+            st.write(get_text("where_weve_been_write"))
 
-        elif selecao_side_bar == "CTS - Gerentes":
+        elif selecao_side_bar == get_text("cts_managers_section_title"):
             
-            st.write("Selecione o mês e ano desejado:")
-            mes = st.number_input("Insira o mês (número)",min_value=6, max_value=12, step=6)
-            ano = st.number_input("Insira o ano",min_value=2023, step=1)
+            st.write(get_text("select_month_year_write"))
+            mes = st.number_input(get_text("month_input_label"),min_value=6, max_value=12, step=6)
+            ano = st.number_input(get_text("year_input_label"),min_value=2023, step=1)
 
             with st.container(border=True):
                 get_tipos_visitas_rvt_semestre(df_rvt, mes, ano)
@@ -657,4 +697,4 @@ if(login_inicio_c or login_inicio_g):
             # st.image(image=latinha)
 
     else:
-        st.warning("faça o upload dos 4 arquivos na pasta")
+        st.warning(get_text("upload_warning"))
