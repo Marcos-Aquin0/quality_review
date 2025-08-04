@@ -126,18 +126,15 @@ if(login_inicio_c or login_inicio_g):
                     get_text("ressarceball_section_title"), 
                     get_text("noc_rvt_relation_section_title"), 
                     get_text("search_noc_section_title"), 
-                    get_text("supervisors_section_title"), 
-                    get_text("analysts_section_title"), 
-                    get_text("specialists_section_title"), 
-                    get_text("key_accounts_section_title"), 
+                    get_text("response_time"),
                     get_text("where_weve_been_section_title"),  
                     get_text("cts_managers_section_title"), 
                     get_text("chat_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_g, 
-                    icons=['cloud', 'coin', 'search', 'search', 'list', 'list', 'list', 'list', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'clock', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
-                
+        
         elif (login_inicio_c):
             with st.sidebar:
                 menu_options_c = [
@@ -145,15 +142,12 @@ if(login_inicio_c or login_inicio_g):
                     get_text("ressarceball_section_title"), 
                     get_text("noc_rvt_relation_section_title"), 
                     get_text("search_noc_section_title"), 
-                    get_text("supervisors_section_title"), 
-                    get_text("analysts_section_title"), 
-                    get_text("specialists_section_title"), 
-                    get_text("key_accounts_section_title"), 
+                    get_text("response_time"), 
                     get_text("where_weve_been_section_title"), 
                     get_text("chat_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_c, 
-                    icons=['cloud', 'coin', 'search', 'search', 'list', 'list', 'list', 'list', 'map', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'clock', 'map', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
                 
         if selecao_side_bar == get_text("salesforce_section_title"):
@@ -382,185 +376,171 @@ if(login_inicio_c or login_inicio_g):
                                     st.write(local)
                                     st.dataframe(df_filtro_noc)
 
-        elif selecao_side_bar == get_text("supervisors_section_title"):
-            
+        elif selecao_side_bar == get_text("response_time"):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
-            df_time_filtrado = df_time[df_time['Divisão'] == 'Supervisor']
-            options = list(set(df_time_filtrado['RegiãoSupervisor']))
+            tab1, tab2, tab3, tab4 = st.tabs(["📗Supervisores", "📘 Especialistas", "📙 Key Accounts", "📕 Analistas"])
+            with tab1:
+                df_time_filtrado = df_time[df_time['Divisão'] == 'Supervisor']
+                options = list(set(df_time_filtrado['RegiãoSupervisor']))
+                
+                selection = st.segmented_control(
+                    "Supervisores", options, selection_mode='single'
+                )
             
-            selection = st.segmented_control(
-                "Supervisores", options, selection_mode='single'
-            )
-        
-            df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
-            df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
-            df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
-            df_filtrado_tipo = df_filtrado_status2[df_filtrado_status2['Tipo de NOC'] == 'EXTERNA']
-            df_filtrado_aprovacao = df_filtrado_tipo[df_filtrado_tipo["AprovacaoInvestigacao"] == "APROVADA"]
-            
-
-            if(selection):
-                df_selecao = df_time_filtrado[df_time_filtrado['RegiãoSupervisor'] == selection]
-                filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
-                nome = str(df_selecao['NomeSalesforce'].iloc[0])
-                imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
-                imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
+                df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
+                df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
+                df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                df_filtrado_tipo = df_filtrado_status2[df_filtrado_status2['Tipo de NOC'] == 'EXTERNA']
+                df_filtrado_aprovacao = df_filtrado_tipo[df_filtrado_tipo["AprovacaoInvestigacao"] == "APROVADA"]
                 
 
-                with st.container(border=True):
-                    col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
-                    with col1:
-                        
-                        cl1,cl2,cl3 = st.columns([1,3,1])
-                        with cl2:
-                            st.image(imagem1, nome)
-                        
-                        st.image(imagem2)
-                    df_filtro_sup = df_filtrado_aprovacao[df_filtrado_aprovacao['Supervisores'] == filtro_sup] 
-                    with col2:
-                        st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="supervisor"))
-                        st.dataframe(df_filtro_sup)
+                if(selection):
+                    df_selecao = df_time_filtrado[df_time_filtrado['RegiãoSupervisor'] == selection]
+                    filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
+                    nome = str(df_selecao['NomeSalesforce'].iloc[0])
+                    imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
+                    imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
+                    
 
-                with st.container(border=True):
-                    st.subheader(get_text("response_time_subheader", mes=mes, ano=ano))
-                    get_tempo_resposta(df_filtro_sup)
-
-                with st.container(border=True):
-                    st.subheader(get_text("ytd_response_time_subheader"))
-                    df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
-                    df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
-                    df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
-                    df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
-                    df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
-                    df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
-                    st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="supervisor"))
-                    st.dataframe(df_filtro_sup_ytd)
-                    get_tempo_resposta(df_filtro_sup_ytd)                       
-                
-        elif selecao_side_bar == get_text("analysts_section_title"):
-            periodo = menu_mensal()
-            mes = periodo[0]
-            ano = periodo[1]
-            # options = ["Analista 1", "Analista 2"]
-            # selection = st.segmented_control(
-            #     "Analistas", options, selection_mode='single'
-            # )
-            st.write("Em breve...")
-
-        elif selecao_side_bar == get_text("specialists_section_title"):
-            periodo = menu_mensal()
-            mes = periodo[0]
-            ano = periodo[1]
-            df_time_filtrado = df_time[df_time['Divisão'] == 'Especialista']
-            options = list(set(df_time_filtrado['RegiãoEspecialista']))
-            selection = st.segmented_control(
-                "Especialistas", options, selection_mode='single'
-            )
-
-            df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
-            df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
-            df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
-            df_filtrado_tipo = df_filtrado_status2[df_filtrado_status2['Tipo de NOC'] == 'EXTERNA']
-            df_filtrado_aprovacao = df_filtrado_tipo[df_filtrado_tipo["AprovacaoInvestigacao"] == "APROVADA"]
-            
-            if(selection):
-                df_selecao = df_time_filtrado[df_time_filtrado['RegiãoEspecialista'] == selection]
-                filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
-                nome = str(df_selecao['NomeSalesforce'].iloc[0])
-                imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
-                imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
-
-                with st.container(border=True):
-                    col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
-                    with col1:
-                        
-                        cl1,cl2,cl3 = st.columns([1,3,1])
-                        with cl2:
-                            st.image(imagem1, nome)
-                        
-                        st.image(imagem2)
-                    with col2:
-                        st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
+                    with st.container(border=True):
+                        col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
+                        with col1:
+                            
+                            cl1,cl2,cl3 = st.columns([1,3,1])
+                            with cl2:
+                                st.image(imagem1, nome)
+                            
+                            st.image(imagem2)
                         df_filtro_sup = df_filtrado_aprovacao[df_filtrado_aprovacao['Supervisores'] == filtro_sup] 
-                        st.dataframe(df_filtro_sup)
+                        with col2:
+                            st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="supervisor"))
+                            st.dataframe(df_filtro_sup)
 
-                with st.container(border=True):
-                    st.subheader(get_text("response_time_subheader", mes=mes, ano=ano))
-                    get_tempo_resposta(df_filtro_sup)
+                    with st.container(border=True):
+                        st.subheader(get_text("response_time_subheader", mes=mes, ano=ano))
+                        get_tempo_resposta(df_filtro_sup)
 
-                with st.container(border=True):
-                    st.subheader(get_text("ytd_response_time_subheader"))
-                    df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
-                    df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
-                    df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
-                    df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
-                    df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
-                    df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
-                    st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
-                    st.dataframe(df_filtro_sup_ytd)
-                    get_tempo_resposta(df_filtro_sup_ytd)
-                
-        elif selecao_side_bar == get_text("key_accounts_section_title"):
-            periodo = menu_mensal()
-            mes = periodo[0]
-            ano = periodo[1]
-            options = [div for div in divisoes.keys() if div != 'planta_ball']
-            df_time_filtrado = df_time[df_time['Divisão'] == 'Key Account']
-            selection = st.segmented_control(
-                "Key Accounts", options, selection_mode="single"
-            )
-            
-            st.write(get_text("key_accounts_clients_write"))
-            df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
-            df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
-            df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
-            df_filtrado_tipo = df_filtrado_status2[df_filtrado_status2['Tipo de NOC'] == 'EXTERNA']
-            df_filtrado_aprovacao = df_filtrado_tipo[df_filtrado_tipo["AprovacaoInvestigacao"] == "APROVADA"]
-            
-            
-            if(selection):
-                df_selecao = df_time_filtrado[df_time_filtrado['KA'] == selection]
-                # filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
-                nome = str(df_selecao['NomeSalesforce'].iloc[0])
-                imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
-                imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
-                
-                with st.container(border=True):
-                    col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
+                    with st.container(border=True):
+                        st.subheader(get_text("ytd_response_time_subheader"))
+                        df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+                        df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
+                        df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                        df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
+                        df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
+                        df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
+                        st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="supervisor"))
+                        st.dataframe(df_filtro_sup_ytd)
+                        get_tempo_resposta(df_filtro_sup_ytd)                       
+            with tab2:
+                df_time_filtrado = df_time[df_time['Divisão'] == 'Especialista']
+                options = list(set(df_time_filtrado['RegiãoEspecialista']))
+                selection = st.segmented_control(
+                    "Especialistas", options, selection_mode='single'
+                )
 
-                    with col1:
-                        cl1,cl2,cl3 = st.columns([1,3,1])
-                        with cl2:
-                            st.image(imagem1, nome)
-                        
-                        st.image(imagem2)
-                    #por cliente
-                    lista_em_maiusculo = [cliente.upper() for cliente in divisoes[selection]]
-                    df_filtro_ka = df_filtrado_aprovacao[df_filtrado_aprovacao['Clientes'].isin(lista_em_maiusculo)]
-                    st.dataframe(df_filtro_ka.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])
-                    with col2:
-                        st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="ka"))
-                        st.dataframe(df_filtro_ka)
+                df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
+                df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
+                df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                df_filtrado_tipo = df_filtrado_status2[df_filtrado_status2['Tipo de NOC'] == 'EXTERNA']
+                df_filtrado_aprovacao = df_filtrado_tipo[df_filtrado_tipo["AprovacaoInvestigacao"] == "APROVADA"]
                 
-                with st.container(border=True):
-                    st.subheader(f"Tempo de resposta - {mes}/{ano}")
-                    get_tempo_resposta(df_filtro_ka)
+                if(selection):
+                    df_selecao = df_time_filtrado[df_time_filtrado['RegiãoEspecialista'] == selection]
+                    filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
+                    nome = str(df_selecao['NomeSalesforce'].iloc[0])
+                    imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
+                    imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
 
-                with st.container(border=True):
-                    st.subheader("Tempo de resposta - YTD")
-                    df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
-                    df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
-                    df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
-                    df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
-                    df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
-                    df_filtro_ka_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Clientes'].isin(lista_em_maiusculo)]
-                    st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="ka"))
-                    st.dataframe(df_filtro_ka_ytd)
-                    st.dataframe(df_filtro_ka_ytd.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])    
-                    get_tempo_resposta(df_filtro_ka_ytd)
+                    with st.container(border=True):
+                        col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
+                        with col1:
+                            
+                            cl1,cl2,cl3 = st.columns([1,3,1])
+                            with cl2:
+                                st.image(imagem1, nome)
+                            
+                            st.image(imagem2)
+                        with col2:
+                            st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
+                            df_filtro_sup = df_filtrado_aprovacao[df_filtrado_aprovacao['Supervisores'] == filtro_sup] 
+                            st.dataframe(df_filtro_sup)
+
+                    with st.container(border=True):
+                        st.subheader(get_text("response_time_subheader", mes=mes, ano=ano))
+                        get_tempo_resposta(df_filtro_sup)
+
+                    with st.container(border=True):
+                        st.subheader(get_text("ytd_response_time_subheader"))
+                        df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+                        df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
+                        df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                        df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
+                        df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
+                        df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
+                        st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
+                        st.dataframe(df_filtro_sup_ytd)
+                        get_tempo_resposta(df_filtro_sup_ytd)
+            with tab3:  
+                options = [div for div in divisoes.keys() if div != 'planta_ball']
+                df_time_filtrado = df_time[df_time['Divisão'] == 'Key Account']
+                selection = st.segmented_control(
+                    "Key Accounts", options, selection_mode="single"
+                )
                 
+                st.write(get_text("key_accounts_clients_write"))
+                df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
+                df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
+                df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                df_filtrado_tipo = df_filtrado_status2[df_filtrado_status2['Tipo de NOC'] == 'EXTERNA']
+                df_filtrado_aprovacao = df_filtrado_tipo[df_filtrado_tipo["AprovacaoInvestigacao"] == "APROVADA"]
+                
+                
+                if(selection):
+                    df_selecao = df_time_filtrado[df_time_filtrado['KA'] == selection]
+                    # filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
+                    nome = str(df_selecao['NomeSalesforce'].iloc[0])
+                    imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
+                    imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
+                    
+                    with st.container(border=True):
+                        col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
+
+                        with col1:
+                            cl1,cl2,cl3 = st.columns([1,3,1])
+                            with cl2:
+                                st.image(imagem1, nome)
+                            
+                            st.image(imagem2)
+                        #por cliente
+                        lista_em_maiusculo = [cliente.upper() for cliente in divisoes[selection]]
+                        df_filtro_ka = df_filtrado_aprovacao[df_filtrado_aprovacao['Clientes'].isin(lista_em_maiusculo)]
+                        st.dataframe(df_filtro_ka.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])
+                        with col2:
+                            st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="ka"))
+                            st.dataframe(df_filtro_ka)
+                    
+                    with st.container(border=True):
+                        st.subheader(f"Tempo de resposta - {mes}/{ano}")
+                        get_tempo_resposta(df_filtro_ka)
+
+                    with st.container(border=True):
+                        st.subheader("Tempo de resposta - YTD")
+                        df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+                        df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
+                        df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                        df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
+                        df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
+                        df_filtro_ka_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Clientes'].isin(lista_em_maiusculo)]
+                        st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="ka"))
+                        st.dataframe(df_filtro_ka_ytd)
+                        st.dataframe(df_filtro_ka_ytd.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])    
+                        get_tempo_resposta(df_filtro_ka_ytd)
+                
+            with tab4:
+                st.write("Em breve...")
+
         elif selecao_side_bar == get_text("where_weve_been_section_title"):
             st.info(get_text("where_weve_been_info"))
 
@@ -699,7 +679,3 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
-
-
-
-
