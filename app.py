@@ -541,7 +541,7 @@ if(login_inicio_c or login_inicio_g):
                     df_filtro_ka = df_filtrado_aprovacao[df_filtrado_aprovacao['Clientes'].isin(lista_em_maiusculo)]
                     st.dataframe(df_filtro_ka.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])
                     with col2:
-                        st.info(get_text("month_info_text", mes=mes, ano=ano, selection=selection, role="ka"))
+                        st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="ka"))
                         st.dataframe(df_filtro_ka)
                 
                 with st.container(border=True):
@@ -699,6 +699,7 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
 
 
