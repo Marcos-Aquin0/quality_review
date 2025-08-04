@@ -57,6 +57,7 @@
     "analysts_write": "Em breve...",
     "key_accounts_clients_write": "Clientes por Key Account",
     "month_info_text": "Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas no período {mes}/{ano} para o {role} {nome}",
+    "response_time_subheader": "Tempo de resposta",
     "response_time_subheader": "Tempo de resposta - {mes}/{ano}",
     "ytd_response_time_subheader": "Tempo de resposta - YTD",
     "ytd_info_text": "Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas a partir do mês 1/{ano} até o mês {mes}/{ano} selecionado para o {role} {nome}",
@@ -82,3 +83,4 @@
     "ressarceball_time_info": "Se a NOC está em alguma etapa do ressarceball que não é a Final, o tempo ficará como -. Se a NOC não entrou no ressarceball, será considerado a data de aprovação da investigação do salesforce"
 
 }
+
