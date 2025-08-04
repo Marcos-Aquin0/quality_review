@@ -57,6 +57,7 @@
     "analysts_write": "Próximamente...",
     "key_accounts_clients_write": "Clientes por Key Account",
     "month_info_text": "Estas son las NOCs que no fueron Canceladas, no están en Preenchimento, son Externas y fueron Aprobadas en el período {mes}/{ano} para el {role} {nome}",
+    "response_time": "Tiempo de respuesta",
     "response_time_subheader": "Tiempo de respuesta - {mes}/{ano}",
     "ytd_response_time_subheader": "Tiempo de respuesta - YTD",
     "ytd_info_text": "Estas son las NOCs que no fueron Canceladas, no están en Preenchimento, son Externas y fueron Aprobadas desde el mes 1/{ano} hasta el mes {mes}/{ano} seleccionado para el {role} {nome}",
@@ -80,4 +81,5 @@
     "qr_slide_chart_info": "¡Este gráfico debe ser colocado en la diapositiva de QR. Al descargarlo como png, estará con las barras y los números en blanco!",
     "filter_info": "El filtro se aplica en DataRecebimentoSAC y la cantidad de Incidentes ignora las NOCs canceladas",
     "ressarceball_time_info": "Si la NOC está en alguna etapa de ressarceball que no es la Final, el tiempo quedará como -. Si la NOC no entró en ressarceball, se considerará la fecha de aprobación de la investigación de salesforce"
+
 }
