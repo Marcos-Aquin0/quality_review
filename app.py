@@ -155,7 +155,6 @@ if(login_inicio_c or login_inicio_g):
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_c, 
                     icons=['cloud', 'coin', 'search', 'search', 'list', 'list', 'list', 'list', 'map', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
-                st.info(get_text("sidebar_reload_info"))
                 
         if selecao_side_bar == get_text("salesforce_section_title"):
             periodo = menu_mensal()
@@ -700,5 +699,6 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
 
