@@ -60,7 +60,7 @@ if(login_inicio_c or login_inicio_g):
         st.header("1. Carregar Arquivos")
         
         uploaded_files = st.file_uploader(
-            "Navegue até a pasta \\16 - SERVIÇO AO CLIENTE\\08. SVC - Gestão\\13. Estagiários\\Conexões, e selecione todos os arquivos",
+            "Navegue até a pasta \\16 - SERVIÇO AO CLIENTE\\32. Conexoes, e selecione todos os arquivos",
             type=['xlsx'],
             accept_multiple_files=True
         )
@@ -700,4 +700,5 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
