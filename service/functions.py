@@ -824,6 +824,8 @@ def get_flow(nome_df, noc, linha_noc):
         st.session_state.flow_state = None
     if 'last_status' not in st.session_state:
         st.session_state.last_status = None
+    if 'all_flows' not in st.session_state:
+        st.session_state.all_flows = {}
 
     STYLE_DEFAULT = {'background': '#D3D3D3', 'border': '2px solid #808080', 'borderRadius': '5px', 'padding': '10px', 'color': '#000000'}
     STYLE_CURRENT = {'background': '#FFA500', 'border': '2px solid #A56C00', 'borderRadius': '5px', 'padding': '10px', 'color': '#FFFFFF'}
@@ -864,45 +866,43 @@ def get_flow(nome_df, noc, linha_noc):
     elif nome_df == "Ressarceball Devolução Brasil":
         INITIAL_NODES = [
             StreamlitFlowNode('AGUARDANDO NF DEVOLUÇÕES', (50, 250), {'content': 'AGUARDANDO NF DEVOLUÇÕES'}, 'input', 'right', draggable=False),
-            StreamlitFlowNode('AGENDAMENTO DA COLETA', (300, 250), {'content': 'AGENDAMENTO DA COLETA'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('AGUARDANDO RECEBIMENTO DA CARGA', (550, 250), {'content': 'AGUARDANDO RECEBIMENTO DA CARGA'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('AGUARDANDO OV E REMESSA', (800, 250), {'content': 'AGUARDANDO OV E REMESSA'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('AGUARDANDO LANÇAMENTO DAS OV', (1050, 250), {'content': 'AGUARDANDO LANÇAMENTO DAS OV'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('APROVAÇÃO (TIK)', (1300, 250), {'content': 'APROVAÇÃO (TIK)'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('DEVOLUÇÃO FINALIZADA', (1550, 250), {'content': 'DEVOLUÇÃO FINALIZADA'}, 'output', 'left', draggable=False)
+            StreamlitFlowNode('AGENDAMENTO DA COLETA', (300, 250), {'content': 'AGENDAMENTO DA COLETA'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('AGUARDANDO RECEBIMENTO DA CARGA', (550, 250), {'content': 'AGUARDANDO RECEBIMENTO DA CARGA'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('AGUARDANDO OV E REMESSA', (800, 250), {'content': 'AGUARDANDO OV E REMESSA'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('AGUARDANDO LANÇAMENTO DAS OV', (1050, 250), {'content': 'AGUARDANDO LANÇAMENTO DAS OV'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('APROVAÇÃO TAX', (1300, 250), {'content': 'APROVAÇÃO TAX'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('DEVOLUÇÃO FINALIZADA', (1550, 250), {'content': 'DEVOLUÇÃO FINALIZADA'}, 'output', 'right', 'left', draggable=False)
         ]
         EDGES = [
             StreamlitFlowEdge('e1', 'AGUARDANDO NF DEVOLUÇÕES', 'AGENDAMENTO DA COLETA', animated=False),
             StreamlitFlowEdge('e2', 'AGENDAMENTO DA COLETA', 'AGUARDANDO RECEBIMENTO DA CARGA', animated=False),
             StreamlitFlowEdge('e3', 'AGUARDANDO RECEBIMENTO DA CARGA', 'AGUARDANDO OV E REMESSA', animated=False),
             StreamlitFlowEdge('e4', 'AGUARDANDO OV E REMESSA', 'AGUARDANDO LANÇAMENTO DAS OV', animated=False),
-            StreamlitFlowEdge('e5', 'AGUARDANDO LANÇAMENTO DAS OV', 'APROVAÇÃO (TIK)', animated=False),
-            StreamlitFlowEdge('e6', 'APROVAÇÃO (TIK)', 'DEVOLUÇÃO FINALIZADA', animated=False),
+            StreamlitFlowEdge('e5', 'AGUARDANDO LANÇAMENTO DAS OV', 'APROVAÇÃO TAX', animated=False),
+            StreamlitFlowEdge('e6', 'APROVAÇÃO TAX', 'DEVOLUÇÃO FINALIZADA', animated=False),
             # Loops de "Não Aprovada"
-            StreamlitFlowEdge('e7-loop1', 'AGUARDANDO LANÇAMENTO DAS OV', 'AGUARDANDO OV E REMESSA', animated=False, label="NÃO APROVADA", type='smoothstep'),
-            StreamlitFlowEdge('e8-loop2', 'AGUARDANDO OV E REMESSA', 'AGUARDANDO RECEBIMENTO DA CARGA', animated=False, label="NÃO APROVADA", type='smoothstep')
         ]
         PATH_MAIN = ['AGUARDANDO NF DEVOLUÇÕES', 'AGENDAMENTO DA COLETA', 'AGUARDANDO RECEBIMENTO DA CARGA', 'AGUARDANDO OV E REMESSA', 'AGUARDANDO LANÇAMENTO DAS OV', 'APROVAÇÃO (TIK)', 'DEVOLUÇÃO FINALIZADA']
         PATHS = {'PATH_MAIN': PATH_MAIN}
 
-    elif nome_df == "RessarceBall Paraguai":
+    elif nome_df == "RessarceBall Argentina":
         INITIAL_NODES = [
             # Common End
             StreamlitFlowNode('SOLICITACIONES CONCLUIDAS (SAP)', (1800, 250), {'content': 'SOLICITACIONES CONCLUIDAS (SAP)'}, 'output', 'left', draggable=False),
             # Top Branch
             StreamlitFlowNode('CON DEVOLUCION', (50, 100), {'content': 'CON DEVOLUCION'}, 'input', 'right', draggable=False),
-            StreamlitFlowNode('CREAR SOLICITACION DE DEVOLUCION', (300, 100), {'content': 'CREAR SOLICITACION DE DEVOLUCION'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('PENDIENTE DEL OV - COMERCIAL', (600, 100), {'content': 'PENDIENTE DEL OV - COMERCIAL'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('DATOS DEL RETIRO - LOGISTICA', (900, 100), {'content': 'DATOS DEL RETIRO - LOGISTICA'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('INGRESO DE LA DEVOLUCION - EXPEDICION', (1200, 100), {'content': 'INGRESO DE LA DEVOLUCION - EXPEDICION'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('EMISION DE LA FACTURA', (1500, 100), {'content': 'EMISION DE LA FACTURA'}, 'default', 'left', 'right', draggable=False),
+            StreamlitFlowNode('CREAR SOLICITACION DE DEVOLUCION', (300, 100), {'content': 'CREAR SOLICITACION DE DEVOLUCION'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('PENDIENTE DEL OV - COMERCIAL', (600, 100), {'content': 'PENDIENTE DEL OV - COMERCIAL'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('DATOS DEL RETIRO - LOGISTICA', (900, 100), {'content': 'DATOS DEL RETIRO - LOGISTICA'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('INGRESO DE LA DEVOLUCION - EXPEDICION', (1200, 100), {'content': 'INGRESO DE LA DEVOLUCION - EXPEDICION'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('EMISION DE LA FACTURA', (1500, 100), {'content': 'EMISION DE LA FACTURA'}, 'default', 'right', 'left', draggable=False),
             # Bottom Branch
             StreamlitFlowNode('SIN DEVOLUCION', (50, 400), {'content': 'SIN DEVOLUCION'}, 'input', 'right', draggable=False),
-            StreamlitFlowNode('CREAR SOLICITACION DE CARTA DE CREDITO', (300, 400), {'content': 'CREAR SOLICITACION DE CARTA DE CREDITO'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('VALIDACION DE LA CANTIDAD - CTS', (600, 400), {'content': 'VALIDACION DE LA CANTIDAD - CTS'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('DATOS DE LO VALOR - PRICING', (900, 400), {'content': 'DATOS DE LO VALOR - PRICING'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('EMISION NOTA DE CREDITO - C2C', (1200, 400), {'content': 'EMISION NOTA DE CREDITO - C2C'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('ENVIO AL CLIENTE - CTS', (1500, 400), {'content': 'ENVIO AL CLIENTE - CTS'}, 'default', 'left', 'right', draggable=False),
+            StreamlitFlowNode('CREAR SOLICITACION DE CARTA DE CREDITO', (300, 400), {'content': 'CREAR SOLICITACION DE CARTA DE CREDITO'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('VALIDACION DE LA CANTIDAD - CTS', (600, 400), {'content': 'VALIDACION DE LA CANTIDAD - CTS'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('DATOS DE LO VALOR - PRICING', (900, 400), {'content': 'DATOS DE LO VALOR - PRICING'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('EMISION NOTA DE CREDITO - C2C', (1200, 400), {'content': 'EMISION NOTA DE CREDITO - C2C'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('ENVIO AL CLIENTE - CTS', (1500, 400), {'content': 'ENVIO AL CLIENTE - CTS'}, 'default', 'right', 'left', draggable=False),
         ]
         EDGES = [
             StreamlitFlowEdge('e_top1', 'CON DEVOLUCION', 'CREAR SOLICITACION DE DEVOLUCION', animated=False),
@@ -927,20 +927,20 @@ def get_flow(nome_df, noc, linha_noc):
             StreamlitFlowNode('SOLICITACIONES CONCLUIDAS (SAP)', (2100, 250), {'content': 'SOLICITACIONES CONCLUIDAS (SAP)'}, 'output', 'left', draggable=False),
             # Top Branch
             StreamlitFlowNode('CON DEVOLUCION', (50, 100), {'content': 'CON DEVOLUCION'}, 'input', 'right', draggable=False),
-            StreamlitFlowNode('CREAR SOLICITACION CON DEVOLUCION', (300, 100), {'content': 'CREAR SOLICITACION CON DEVOLUCION'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('DATOS DEL RETIRO - BP', (600, 100), {'content': 'DATOS DEL RETIRO - BP'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('DATOS DE VENTA - EXPEDICION', (900, 100), {'content': 'DATOS DE VENTA - EXPEDICION'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('PENDIENTE DEL OV - GDS', (1200, 100), {'content': 'PENDIENTE DEL OV - GDS'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('INGRESO DE LA DEVOLUCION - EXPEDICION', (1500, 100), {'content': 'INGRESO DE LA DEVOLUCION - EXPEDICION'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('VALIDACION DEL REMITO DEVOLUCIONES - BP', (1800, 100), {'content': 'VALIDACION DEL REMITO DEVOLUCIONES - BP'}, 'default', 'left', 'right', draggable=False),
+            StreamlitFlowNode('CREAR SOLICITACION CON DEVOLUCION', (300, 100), {'content': 'CREAR SOLICITACION CON DEVOLUCION'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('DATOS DEL RETIRO - BP', (600, 100), {'content': 'DATOS DEL RETIRO - BP'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('DATOS DE VENTA - EXPEDICION', (900, 100), {'content': 'DATOS DE VENTA - EXPEDICION'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('PENDIENTE DEL OV - GDS', (1200, 100), {'content': 'PENDIENTE DEL OV - GDS'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('INGRESO DE LA DEVOLUCION - EXPEDICION', (1500, 100), {'content': 'INGRESO DE LA DEVOLUCION - EXPEDICION'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('VALIDACION DEL REMITO DEVOLUCIONES - BP', (1800, 100), {'content': 'VALIDACION DEL REMITO DEVOLUCIONES - BP'}, 'default', 'right', 'left', draggable=False),
             # Bottom Branch
             StreamlitFlowNode('SIN DEVOLUCION', (50, 400), {'content': 'SIN DEVOLUCION'}, 'input', 'right', draggable=False),
-            StreamlitFlowNode('CREAR SOLICITACION DE CARTA DE CREDITO', (300, 400), {'content': 'CREAR SOLICITACION DE CARTA DE CREDITO'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('VALIDACION DE LA CANTIDAD - CTS', (600, 400), {'content': 'VALIDACION DE LA CANTIDAD - CTS'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('DATOS DE LO VALOR - PRICING', (900, 400), {'content': 'DATOS DE LO VALOR - PRICING'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('PENDIENTE DE FACTURA - COMERCIAL', (1200, 400), {'content': 'PENDIENTE DE FACTURA - COMERCIAL'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('EMISION NOTA DE CREDITO - GDS', (1500, 400), {'content': 'EMISION NOTA DE CREDITO - GDS'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('ENVIO AL CLIENTE - COMERCIAL', (1800, 400), {'content': 'ENVIO AL CLIENTE - COMERCIAL'}, 'default', 'left', 'right', draggable=False),
+            StreamlitFlowNode('CREAR SOLICITACION DE CARTA DE CREDITO', (300, 400), {'content': 'CREAR SOLICITACION DE CARTA DE CREDITO'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('VALIDACION DE LA CANTIDAD - CTS', (600, 400), {'content': 'VALIDACION DE LA CANTIDAD - CTS'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('DATOS DE LO VALOR - PRICING', (900, 400), {'content': 'DATOS DE LO VALOR - PRICING'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('PENDIENTE DE FACTURA - COMERCIAL', (1200, 400), {'content': 'PENDIENTE DE FACTURA - COMERCIAL'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('EMISION NOTA DE CREDITO - GDS', (1500, 400), {'content': 'EMISION NOTA DE CREDITO - GDS'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('ENVIO AL CLIENTE - COMERCIAL', (1800, 400), {'content': 'ENVIO AL CLIENTE - COMERCIAL'}, 'default', 'right', 'left', draggable=False),
         ]
         EDGES = [
             StreamlitFlowEdge('e_top1', 'CON DEVOLUCION', 'CREAR SOLICITACION CON DEVOLUCION', animated=False),
@@ -962,28 +962,28 @@ def get_flow(nome_df, noc, linha_noc):
         PATH_BOTTOM = ['SIN DEVOLUCION', 'CREAR SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', 'PENDIENTE DE FACTURA - COMERCIAL', 'EMISION NOTA DE CREDITO - GDS', 'ENVIO AL CLIENTE - COMERCIAL', 'SOLICITACIONES CONCLUIDAS (SAP)']
         PATHS = {'PATH_TOP': PATH_TOP, 'PATH_BOTTOM': PATH_BOTTOM}
 
-    elif nome_df == "RessarceBall Argentina":
+    elif nome_df == "RessarceBall Paraguai":
         INITIAL_NODES = [
             StreamlitFlowNode('CONCLUSION DEL COMPENSACIÓN (SAP)', (1800, 250), {'content': 'CONCLUSION DEL COMPENSACIÓN (SAP)'}, 'output', 'left', draggable=False),
             # Top Branch
             StreamlitFlowNode('CON DEVOLUCION', (50, 100), {'content': 'CON DEVOLUCION'}, 'input', 'right', draggable=False),
-            StreamlitFlowNode('SOLICITAR DEVOLUCION', (300, 100), {'content': 'SOLICITAR DEVOLUCION'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('PENDIENTE C2C-GDS', (600, 100), {'content': 'PENDIENTE C2C-GDS'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('PENDIENTE DE LOGISTICA', (900, 100), {'content': 'PENDIENTE DE LOGISTICA'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('PENDIENTE DE EXPEDICION', (1200, 100), {'content': 'PENDIENTE DE EXPEDICION'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('PENDIENTE DEL COMERCIAL', (1500, 100), {'content': 'PENDIENTE DEL COMERCIAL'}, 'default', 'left', 'right', draggable=False),
+            StreamlitFlowNode('SOLICITAR DEVOLUCION', (300, 100), {'content': 'SOLICITAR DEVOLUCION'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('PENDIENTE C2C/GBS', (600, 100), {'content': 'PENDIENTE C2C/GBS'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('PENDIENTE DE LOGISTICA', (900, 100), {'content': 'PENDIENTE DE LOGISTICA'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('PENDIENTE DE EXPEDICION', (1200, 100), {'content': 'PENDIENTE DE EXPEDICION'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('PENDIENTE DEL COMERCIAL', (1500, 100), {'content': 'PENDIENTE DEL COMERCIAL'}, 'default', 'right', 'left', draggable=False),
             # Bottom Branch
             StreamlitFlowNode('SIN DEVOLUCION', (50, 400), {'content': 'SIN DEVOLUCION'}, 'input', 'right', draggable=False),
-            StreamlitFlowNode('SOLICITACION DE CARTA DE CREDITO', (300, 400), {'content': 'SOLICITACION DE CARTA DE CREDITO'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('VALIDACION DE LA CANTIDAD - CTS', (600, 400), {'content': 'VALIDACION DE LA CANTIDAD - CTS'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('DATOS DE LO VALOR - PRICING', (900, 400), {'content': 'DATOS DE LO VALOR - PRICING'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('EMISION NOTA DE CREDITO - C2C', (1200, 400), {'content': 'EMISION NOTA DE CREDITO - C2C'}, 'default', 'left', 'right', draggable=False),
-            StreamlitFlowNode('ENVIO AL CLIENTE - CTS', (1500, 400), {'content': 'ENVIO AL CLIENTE - CTS'}, 'default', 'left', 'right', draggable=False),
+            StreamlitFlowNode('SOLICITACION DE CARTA DE CREDITO', (300, 400), {'content': 'SOLICITACION DE CARTA DE CREDITO'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('VALIDACION DE LA CANTIDAD - CTS', (600, 400), {'content': 'VALIDACION DE LA CANTIDAD - CTS'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('DATOS DE LO VALOR - PRICING', (900, 400), {'content': 'DATOS DE LO VALOR - PRICING'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('EMISION NOTA DE CREDITO - C2C', (1200, 400), {'content': 'EMISION NOTA DE CREDITO - C2C'}, 'default', 'right', 'left', draggable=False),
+            StreamlitFlowNode('ENVIO AL CLIENTE - CTS', (1500, 400), {'content': 'ENVIO AL CLIENTE - CTS'}, 'default', 'right', 'left', draggable=False),
         ]
         EDGES = [
             StreamlitFlowEdge('e_top1', 'CON DEVOLUCION', 'SOLICITAR DEVOLUCION', animated=False),
-            StreamlitFlowEdge('e_top2', 'SOLICITAR DEVOLUCION', 'PENDIENTE C2C-GDS', animated=False),
-            StreamlitFlowEdge('e_top3', 'PENDIENTE C2C-GDS', 'PENDIENTE DE LOGISTICA', animated=False),
+            StreamlitFlowEdge('e_top2', 'SOLICITAR DEVOLUCION', 'PENDIENTE C2C/GBS', animated=False),
+            StreamlitFlowEdge('e_top3', 'PENDIENTE C2C/GBS', 'PENDIENTE DE LOGISTICA', animated=False),
             StreamlitFlowEdge('e_top4', 'PENDIENTE DE LOGISTICA', 'PENDIENTE DE EXPEDICION', animated=False),
             StreamlitFlowEdge('e_top5', 'PENDIENTE DE EXPEDICION', 'PENDIENTE DEL COMERCIAL', animated=False),
             StreamlitFlowEdge('e_top_final', 'PENDIENTE DEL COMERCIAL', 'CONCLUSION DEL COMPENSACIÓN (SAP)', animated=False),
@@ -994,23 +994,25 @@ def get_flow(nome_df, noc, linha_noc):
             StreamlitFlowEdge('e_bot5', 'EMISION NOTA DE CREDITO - C2C', 'ENVIO AL CLIENTE - CTS', animated=False),
             StreamlitFlowEdge('e_bot_final', 'ENVIO AL CLIENTE - CTS', 'CONCLUSION DEL COMPENSACIÓN (SAP)', animated=False),
         ]
-        PATH_TOP = ['CON DEVOLUCION', 'SOLICITAR DEVOLUCION', 'PENDIENTE C2C-GDS', 'PENDIENTE DE LOGISTICA', 'PENDIENTE DE EXPEDICION', 'PENDIENTE DEL COMERCIAL', 'CONCLUSION DEL COMPENSACIÓN (SAP)']
+        PATH_TOP = ['CON DEVOLUCION', 'SOLICITAR DEVOLUCION', 'PENDIENTE C2C/GBS', 'PENDIENTE DE LOGISTICA', 'PENDIENTE DE EXPEDICION', 'PENDIENTE DEL COMERCIAL', 'CONCLUSION DEL COMPENSACIÓN (SAP)']
         PATH_BOTTOM = ['SIN DEVOLUCION', 'SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', 'EMISION NOTA DE CREDITO - C2C', 'ENVIO AL CLIENTE - CTS', 'CONCLUSION DEL COMPENSACIÓN (SAP)']
         PATHS = {'PATH_TOP': PATH_TOP, 'PATH_BOTTOM': PATH_BOTTOM}
 
     current_status_id = linha_noc['Status']
+    flow_key = str(noc)
+    last_known_status = st.session_state.all_flows.get(flow_key, {}).get('last_status')
 
-    if st.session_state.last_status != current_status_id:
+    # Só recalcula se o status DESTE FLUXO mudou
+    if last_known_status != current_status_id:
         
         nodes_to_render = []
         edges_to_render = []
-    
+
         if current_status_id == 'CANCELADA':
             cancelled_node = StreamlitFlowNode('CANCELADA', (800, 250), {'content': 'CANCELADA'}, 'output', style=STYLE_CANCELLED)
             nodes_to_render = [cancelled_node]
             edges_to_render = []
         else:
-            # Se não for cancelada, executa a lógica de pintura normal
             active_path = []
             for path_name, path_list in PATHS.items():
                 if current_status_id in path_list:
@@ -1020,13 +1022,12 @@ def get_flow(nome_df, noc, linha_noc):
             try:
                 current_index = active_path.index(current_status_id)
             except (ValueError, IndexError):
-                current_index = -1 # Status não encontrado no caminho ativo
+                current_index = -1
 
             nodes_to_render = deepcopy(INITIAL_NODES)
             edges_to_render = EDGES
 
             for node in nodes_to_render:
-                # Aplica o estilo default primeiro a todos
                 node.style = STYLE_DEFAULT
                 if active_path and node.id in active_path:
                     node_index_in_path = active_path.index(node.id)
@@ -1035,13 +1036,22 @@ def get_flow(nome_df, noc, linha_noc):
                     elif node_index_in_path == current_index:
                         node.style = STYLE_CURRENT
         
-        st.session_state.flow_state = StreamlitFlowState(nodes=nodes_to_render, edges=edges_to_render)
-        st.session_state.last_status = current_status_id
+        # Cria o objeto de estado do fluxo
+        new_flow_state = StreamlitFlowState(nodes=nodes_to_render, edges=edges_to_render)
 
-    if st.session_state.flow_state:
+        # Guarda o estado e o status na "memória" DESTE FLUXO, usando a chave única
+        st.session_state.all_flows[flow_key] = {
+            'state_object': new_flow_state,
+            'last_status': current_status_id
+        }
+
+    # Pega o estado a ser renderizado da memória deste fluxo específico
+    state_to_render = st.session_state.all_flows.get(flow_key, {}).get('state_object')
+
+    if state_to_render:
         streamlit_flow(
-            f'flow_renderer_{nome_df}', # Chave única por fluxo
-            state=st.session_state.flow_state,
+            key=f'flow_renderer_{flow_key}_{nome_df}', 
+            state=state_to_render,
             fit_view=True,
             show_minimap=False,
             show_controls=False
