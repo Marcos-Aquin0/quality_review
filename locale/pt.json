@@ -8,7 +8,7 @@
     "main_title": "QUALITY REVIEW MENSAL",
     "app_intro": "Este é o app de relatório do Quality Review!",
     "file_uploader_header": "1. Carregar Arquivos",
-    "file_uploader_label": "Navegue até a pasta \\16 - SERVIÇO AO CLIENTE\\08. SVC - Gestão\\13. Estagiários\\Conexões, e selecione todos os arquivos",
+    "file_uploader_label": "Navegue até a pasta \\16 - SERVIÇO AO CLIENTE\\32. Conexões, e selecione todos os arquivos",
     "file_upload_success": "Arquivos carregados e processados com sucesso!",
     "sidebar_menu_title": "Menu",
     "sidebar_reload_info": "Para recarregar a página basta clicar R",
@@ -16,6 +16,7 @@
     "ressarceball_section_title": "RessarceBall",
     "noc_rvt_relation_section_title": "Relação NOC_RVT",
     "search_noc_section_title": "Buscar NOC",
+    "search_rvt_section_title": "Buscar RVT",
     "supervisors_section_title": "Supervisores",
     "analysts_section_title": "Analistas",
     "specialists_section_title": "Especialistas",
@@ -80,8 +81,8 @@
     "evaluate_incidents_write": "Aqui você pode avaliar os incidentes para cada mês e de acordo com a conta selecionada:",
     "qr_slide_chart_info": "Esse gráfico deve ser colocado no slide de QR. Ao baixar como png, ele estará com as barras e os números brancos!",
     "filter_info": "O filtro está aplicado em DataRecebimentoSAC e a quantidade de Incidentes ignora as NOCs canceladas",
-    "ressarceball_time_info": "Se a NOC está em alguma etapa do ressarceball que não é a Final, o tempo ficará como -. Se a NOC não entrou no ressarceball, será considerado a data de aprovação da investigação do salesforce"
-
+    "ressarceball_time_info": "Se a NOC está em alguma etapa do ressarceball que não é a Final, o tempo ficará como -. Se a NOC não entrou no ressarceball, será considerado a data de aprovação da investigação do salesforce",
+    "regionais_clientes": "Clientes Regionais",
+    "select_country": "Selecione o país",
+    "riscos_melhorias": "Riscos e Melhorias"
 }
-
-
