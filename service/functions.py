@@ -230,7 +230,7 @@ def get_qtd_quality(df_rvt, mes, ano):
                 if(df_filtrado['UnidadesBall'].iloc[indice] not in cidades):
                     cidades[df_filtrado['UnidadesBall'].iloc[indice]] = []
                 quality[div] +=1
-                cidades[df_filtrado['UnidadesBall'].iloc[indice]].append(df_filtrado['DataInicio'].iloc[indice].strftime('%d/%m/%Y'))
+                cidades[df_filtrado['UnidadesBall'].iloc[indice]].append(df_filtrado['DataInicio'].iloc[indice])
             else: quality[div] +=1
         indice +=1
     
@@ -302,10 +302,11 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
                 incidentes_anteriores[div][dict_meses[mes_anteriores]] += 1
             indice += 1
 
-    st.dataframe(incidentes_anteriores, column_order=[coluna for coluna in incidentes_anteriores.keys() if coluna != 'planta_ball' and coluna != 'outros']) #incidentes do mes atual
+    
+    st.dataframe(incidentes_anteriores, column_order=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru']]) #incidentes do mes atual
     col1, col2, col3 = st.columns(3)
     with col1:
-        ka = st.selectbox("selecione um key account", options=[coluna for coluna in incidentes_anteriores.keys() if coluna != 'planta_ball' and coluna != 'outros'])
+        ka = st.selectbox("selecione um key account", options=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru']])
         
 
     st.write(get_text("evaluate_incidents_write"))
