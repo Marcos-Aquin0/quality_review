@@ -9,3 +9,4 @@ geopy
 openpyxl
 vl-convert-python
 streamlit-flow-component
+st_click_detector
