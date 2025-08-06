@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 from streamlit_option_menu import option_menu
+from st_click_detector import click_detector
 from dotenv import load_dotenv
 import os
 import json
@@ -9,7 +10,7 @@ import json
 
 load_dotenv()
 
-from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text, get_flow
+from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt
 from service.connections import processar_arquivos_carregados
 
 
@@ -85,8 +86,10 @@ if(login_inicio_c or login_inicio_g):
         df_paraguai = st.session_state.dados_carregados.get('df_paraguai')
         df_time = st.session_state.dados_carregados.get('df_time')
         divisoes = st.session_state.dados_carregados.get('divisoes')
+        df_riscos = st.session_state.dados_carregados.get('riscos')
+        df_melhorias = st.session_state.dados_carregados.get('melhorias') 
         divisoes_pesquisa = {}
-    
+        
         dfs_ressarceball = {
             "Ressarceball Argentina": st.session_state.dados_carregados.get('df_argentina'),
             "Ressarceball Paraguai": st.session_state.dados_carregados.get('df_paraguai'),
@@ -125,14 +128,17 @@ if(login_inicio_c or login_inicio_g):
                     get_text("salesforce_section_title"), 
                     get_text("ressarceball_section_title"), 
                     get_text("noc_rvt_relation_section_title"), 
-                    get_text("search_noc_section_title"), 
+                    get_text("search_noc_section_title"),
+                    get_text("search_rvt_section_title"), 
                     get_text("response_time"),
+                    get_text("riscos_melhorias"),
+                    get_text("regionais_clientes"),
                     get_text("where_weve_been_section_title"),  
                     get_text("cts_managers_section_title"), 
                     get_text("chat_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_g, 
-                    icons=['cloud', 'coin', 'search', 'search', 'clock', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'hammer', 'person', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
         
         elif (login_inicio_c):
@@ -142,12 +148,15 @@ if(login_inicio_c or login_inicio_g):
                     get_text("ressarceball_section_title"), 
                     get_text("noc_rvt_relation_section_title"), 
                     get_text("search_noc_section_title"), 
-                    get_text("response_time"), 
+                    get_text("search_rvt_section_title"),
+                    get_text("response_time"),
+                    get_text("riscos_melhorias"), 
+                    get_text("regionais_clientes"),
                     get_text("where_weve_been_section_title"), 
                     get_text("chat_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_c, 
-                    icons=['cloud', 'coin', 'search', 'search', 'clock', 'map', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'hammer', 'person', 'map', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
                 
         if selecao_side_bar == get_text("salesforce_section_title"):
@@ -376,6 +385,24 @@ if(login_inicio_c or login_inicio_g):
                                     st.write(local)
                                     st.dataframe(df_filtro_noc)
 
+        elif selecao_side_bar == get_text("search_rvt_section_title"):
+            periodo = menu_mensal()
+            mes = periodo[0]
+            ano = periodo[1]
+            df_time_filtrado = df_time[df_time['Divisão'] == 'Analista']
+            nomes = list(set(df_time_filtrado['NomeSalesforce']))
+            analista = st.selectbox("Selecione o Analista:", options=nomes)
+            df_rvt_filtrado_mes = filtrar_por_mes(df_rvt, "DataInicio", mes, ano)
+            df_rvt_nome_analista = df_rvt_filtrado_mes[df_rvt_filtrado_mes['ResponsavelBall'] == analista]
+            st.dataframe(df_rvt_nome_analista, hide_index=True)
+
+            get_tempo_rvt(df_rvt_nome_analista)
+            col1, col2 = st.columns(2)
+            # with col1:
+            #     st.metric("Média de emissão RVT Corretivo")
+            # with col2:
+            #     st.metric("Média de Tempo de 1º Contato RVT Corretivo")
+
         elif selecao_side_bar == get_text("response_time"):
             periodo = menu_mensal()
             mes = periodo[0]
@@ -541,6 +568,58 @@ if(login_inicio_c or login_inicio_g):
             with tab4:
                 st.write("Em breve...")
 
+        elif selecao_side_bar == get_text("riscos_melhorias"):
+            periodo = menu_mensal()
+            mes = periodo[0]
+            ano = periodo[1]
+            tab1, tab2 = st.tabs(["⛑️Riscos de Segurança", "🔨Oportunidades de Melhoria"])
+            with tab1:
+                df_filtrado_riscos = filtrar_por_mes(df_riscos, "DataCriacao", mes, ano)
+                st.dataframe(df_filtrado_riscos, hide_index=True)
+            with tab2:    
+                df_filtrado_melhorias = filtrar_por_mes(df_melhorias, "DataCriacao", mes, ano)
+                st.dataframe(df_filtrado_melhorias, hide_index=True)
+
+        elif selecao_side_bar == get_text("regionais_clientes"):
+            st.subheader(get_text("select_country"))
+            
+            paises = {
+                "Brasil": "https://upload.wikimedia.org/wikipedia/commons/0/05/Flag_of_Brazil.svg",
+                "Chile": "https://upload.wikimedia.org/wikipedia/commons/7/78/Flag_of_Chile.svg",
+                "Argentina": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Flag_of_Argentina.svg",
+                "Bolivia": "https://upload.wikimedia.org/wikipedia/commons/d/de/Flag_of_Bolivia_%28state%29.svg",
+                "Paraguai": "https://upload.wikimedia.org/wikipedia/commons/2/27/Flag_of_Paraguay.svg",
+                "Peru": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Flag_of_Peru.svg",
+            }
+
+            html_content_parts = []
+            for pais, url_bandeira in paises.items():
+                html_part = f"""
+                <a href='#' id='{pais}'>
+                    <img src='{url_bandeira}' width='150' title='{pais}' 
+                        style='margin: 10px; border: 1px solid #ddd; padding: 5px; border-radius: 5px;'>
+                    <a> {pais} </a>
+                </a>
+                """
+                html_content_parts.append(html_part)
+
+            content = "".join(html_content_parts)
+            clicked = click_detector(content)
+
+            if clicked == "Brasil":
+                st.success(f"**{clicked}**")
+                df_filtro_click = df_noc[df_noc["Clientes"].astype(str).str.lower().isin(divisoes["regionais_br"])]
+                df_filtro_click_2 = df_rvt[df_rvt["Clientes"].astype(str).str.lower().isin(divisoes["regionais_br"])]
+                df_noc_rvt = pd.concat([df_filtro_click, df_filtro_click_2], ignore_index=True)
+                
+                df_filtro_click_limpo = df_noc_rvt.drop_duplicates(subset=['CodigoCliente', 'Clientes'],keep='first')
+                st.dataframe(df_filtro_click_limpo, hide_index = True, column_order=["CodigoCliente", "Clientes", "Termo_pesquisa", "CidadeCliente", "CodigoCidadeCliente"])
+                
+            elif clicked:
+                st.success(f"**{clicked}**")
+                st.write()
+
+
         elif selecao_side_bar == get_text("where_weve_been_section_title"):
             st.info(get_text("where_weve_been_info"))
 
@@ -672,7 +751,7 @@ if(login_inicio_c or login_inicio_g):
 
                 st.altair_chart(chart.properties(height=450, width=700), use_container_width=False)
 
-        elif selecao_side_bar == "Chat - Latinha":
+        elif selecao_side_bar == get_text("chat_section_title"):
             st.write("Em breve...")
             # latinha = str(os.getenv("latinha"))
             # st.image(image=latinha)
