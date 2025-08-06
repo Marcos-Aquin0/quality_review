@@ -43,14 +43,22 @@ def processar_arquivos_carregados(uploaded_files):
                 divisoes = series_de_listas.to_dict()
                 divisoes_pesquisa = {}
                 dados_carregados["divisoes"] = divisoes
-
+                
+                df_riscos1 = pd.read_excel(upload_file, sheet_name="Risco de Segurança")
+                df_riscos = limpar_df(df_riscos1)
+                dados_carregados["riscos"] = df_riscos
+                
+                df_melhorias1 = pd.read_excel(upload_file, sheet_name="Oportunidade de Melhoria")
+                df_melhorias = limpar_df(df_melhorias1)
+                dados_carregados["melhorias"] = df_melhorias
+                
         elif(upload_file.name == 'Conexoes_NOC_RVT.xlsx'):
             df_noc1 = pd.read_excel(upload_file, sheet_name="NOC")
             df_noc = limpar_df(df_noc1, ['ClienteId'])
             dados_carregados["df_noc"] = df_noc
             
             df_rvt1 = pd.read_excel(upload_file, sheet_name="RVT")
-            df_rvt = df_rvt1.drop(columns=['Cliente__c', 'ResponsavelBall__c'])
+            df_rvt = limpar_df(df_rvt1, colunas_remover=['Cliente__c', 'ResponsavelBall__c'])
             dados_carregados["df_rvt"] = df_rvt
             
             df_consulta1 = pd.read_excel(upload_file, sheet_name="NOC_e_RVT")
