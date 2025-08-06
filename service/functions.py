@@ -735,9 +735,10 @@ def get_qtd_treinamentos_semestre(df_rvt, mes, ano):
 def calcular_tempo(data_inicio, data_fim):
         """Calcula a diferença em dias. Retorna '-' se alguma data for inválida."""
         # pd.to_datetime lida com a conversão e com valores nulos (NaT)
-        data_inicio = pd.to_datetime(data_inicio)
-        data_fim = pd.to_datetime(data_fim, dayfirst=True)
-        
+        data_inicio = pd.to_datetime(data_inicio,format="%d/%m/%Y")
+        data_fim = pd.to_datetime(data_fim, format="%d/%m/%Y" )
+        # st.write(data_inicio)
+        # st.write(data_fim)
         if pd.notna(data_inicio) and pd.notna(data_fim):
             return abs((data_fim - data_inicio).days)
         return "-"
@@ -818,6 +819,42 @@ def get_tempo_resposta(df_filtro):
     media_dias = round(tempos.mean(), 1)
 
     if(media_dias > 0): st.metric("Média de Dias", media_dias)
+
+def get_tempo_rvt(df_filtro):
+    lista_tempo_resposta = []
+
+    # .iterrows() permite acessar o índice e os dados de cada linha.
+    for _, linha_sup in df_filtro.iterrows():
+        rvt = linha_sup['Numero RVT']
+        data_1Contato = linha_sup['Data1ContatoCliente']
+        data_reclamacao = linha_sup['DataReclamacao']
+        data_inicio = linha_sup['DataInicio']
+        
+        tempo_reclamacao = calcular_tempo(data_inicio, data_1Contato)
+        tempo_contato = calcular_tempo(data_1Contato, data_reclamacao)
+        lista_tempo_resposta.append({
+                "Numero RVT": rvt,
+                "Tempo de Emissão (dias)": tempo_reclamacao,
+                "Tempo de 1º Contato (dias)": tempo_contato
+        })
+        
+    # Cria o DataFrame final a partir da lista de dicionários.
+    df_rvt_tempo_resposta = pd.DataFrame(
+        lista_tempo_resposta,
+        columns=["Numero RVT", "Tempo de Emissão (dias)", "Tempo de 1º Contato (dias)"]
+    )
+
+    st.dataframe(df_rvt_tempo_resposta, hide_index=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        tempos = pd.to_numeric(df_rvt_tempo_resposta['Tempo de Emissão (dias)'], errors='coerce')
+        media_dias = round(tempos.mean(), 1)
+        st.metric("Média de emissão RVT Corretivo", media_dias)
+    with col2:
+        tempos = pd.to_numeric(df_rvt_tempo_resposta['Tempo de 1º Contato (dias)'], errors='coerce')
+        media_dias = round(tempos.mean(), 1)
+        st.metric("Média de Tempo de 1º Contato RVT Corretivo", media_dias)
 
 def get_flow(nome_df, noc, linha_noc):
     if 'flow_state' not in st.session_state:
@@ -1056,8 +1093,6 @@ def get_flow(nome_df, noc, linha_noc):
             show_minimap=False,
             show_controls=False
         )
-
-
 
 def get_mapa():
     divisoes_pesquisa = {}
