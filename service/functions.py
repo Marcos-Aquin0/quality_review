@@ -830,8 +830,9 @@ def get_tempo_rvt(df_filtro):
         data_1Contato = linha_sup['Data1ContatoCliente']
         data_reclamacao = linha_sup['DataReclamacao']
         data_inicio = linha_sup['DataInicio']
-        
-        tempo_reclamacao = calcular_tempo(data_inicio, data_1Contato)
+        data_criacao = linha_sup['DataCriacao']
+
+        tempo_reclamacao = calcular_tempo(data_inicio, data_criacao)
         tempo_contato = calcular_tempo(data_1Contato, data_reclamacao)
         lista_tempo_resposta.append({
                 "Numero RVT": rvt,
@@ -1263,4 +1264,5 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
+
 
