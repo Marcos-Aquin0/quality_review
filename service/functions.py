@@ -90,7 +90,7 @@ def filtrar_por_mes(df, campo_data, mes, ano):
     df_aux_copy = df.copy()
     if mes == '' or df.empty:
         return df
-    df_aux_copy[campo_data] = pd.to_datetime(df_aux_copy[campo_data], format="mixed", dayfirst=False)
+    df_aux_copy[campo_data] = pd.to_datetime(df_aux_copy[campo_data], format="%d/%m/%Y")
     return df[(df_aux_copy[campo_data].dt.month == int(mes)) & (df_aux_copy[campo_data].dt.year == int(ano))]
 
 def filtrar_por_ytd(df, campo_data, mes, ano):
@@ -1263,3 +1263,4 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
+
