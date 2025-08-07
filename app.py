@@ -617,26 +617,30 @@ if(login_inicio_c or login_inicio_g):
                 
             elif clicked:
                 st.success(f"**{clicked}**")
-                st.write()
-
 
         elif selecao_side_bar == get_text("where_weve_been_section_title"):
+            
             st.info(get_text("where_weve_been_info"))
 
-            complaints_data = divisoes_pesquisa
+            for linha in df_rvt["CidadeCliente"]:
+                if pd.isna(linha):
+                    continue
+                if linha not in divisoes_pesquisa:
+                    divisoes_pesquisa[linha] = 0
+                divisoes_pesquisa[linha]+= 1
 
-            if 'geocoded_df' not in st.session_state:
-                st.session_state.geocoded_df = pd.DataFrame(columns=["City", "Complaints", "lat", "lon", "Full Address"])
+            # if 'geocoded_df' not in st.session_state:
+            #     st.session_state.geocoded_df = pd.DataFrame(columns=["City", "Complaints", "lat", "lon", "Full Address"])
 
-            if 'ambiguous_city' not in st.session_state:
-                st.session_state.ambiguous_city = None
+            # if 'ambiguous_city' not in st.session_state:
+            #     st.session_state.ambiguous_city = None
 
-            if 'processed_cities' not in st.session_state:
-                st.session_state.processed_cities = []
+            # if 'processed_cities' not in st.session_state:
+            #     st.session_state.processed_cities = []
                 
-            get_mapa()
-
-            st.write(get_text("where_weve_been_write"))
+            # get_mapa(divisoes_pesquisa)
+            visitas = str(os.getenv("visitas"))
+            st.image(visitas)
 
         elif selecao_side_bar == get_text("cts_managers_section_title"):
             
@@ -758,3 +762,4 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
