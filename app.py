@@ -390,18 +390,18 @@ if(login_inicio_c or login_inicio_g):
             mes = periodo[0]
             ano = periodo[1]
             df_time_filtrado = df_time[df_time['Divisão'] == 'Analista']
-            nomes = list(set(df_time_filtrado['NomeSalesforce']))
-            analista = st.selectbox("Selecione o Analista:", options=nomes)
+            df_time_filtrado_2 = df_time[df_time['Divisão'] == 'Supervisor']
+            df_time_filtrado_3 =  pd.concat([df_time_filtrado, df_time_filtrado_2], axis=0)   
+
+            nomes = list(set(df_time_filtrado_3['NomeSalesforce']))
+            analista = st.selectbox("Selecione o Supervisor ou Analista:", options=nomes)
             df_rvt_filtrado_mes = filtrar_por_mes(df_rvt, "DataInicio", mes, ano)
-            df_rvt_nome_analista = df_rvt_filtrado_mes[df_rvt_filtrado_mes['ResponsavelBall'] == analista]
+            df_rvt_filtrado_tipo = df_rvt_filtrado_mes[df_rvt_filtrado_mes["Tipo"].astype(str).str.contains("CORRETIVA")]
+            df_rvt_nome_analista = df_rvt_filtrado_tipo[df_rvt_filtrado_tipo['ResponsavelBall'] == analista]
+            
             st.dataframe(df_rvt_nome_analista, hide_index=True)
 
             get_tempo_rvt(df_rvt_nome_analista)
-            col1, col2 = st.columns(2)
-            # with col1:
-            #     st.metric("Média de emissão RVT Corretivo")
-            # with col2:
-            #     st.metric("Média de Tempo de 1º Contato RVT Corretivo")
 
         elif selecao_side_bar == get_text("response_time"):
             periodo = menu_mensal()
@@ -762,4 +762,5 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
