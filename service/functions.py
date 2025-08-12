@@ -285,43 +285,65 @@ def get_qtd_quality(df_rvt, mes, ano):
 
 def get_incidentes_por_divisao(df_noc, mes, ano):
     divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
     incidentes_anteriores = {}
-
+    popnoc = {}
+    allnocs = []
     for mes_anteriores in range(1, mes+1):
         df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes_anteriores, ano)
         indice = 0
-
+        ignorar = []
         for div in divisoes.keys():
             if(div not in incidentes_anteriores):
                 incidentes_anteriores[div] = {}
+                popnoc[div] = []
             if(dict_meses[mes_anteriores] not in incidentes_anteriores[div]):
                 incidentes_anteriores[div][dict_meses[mes_anteriores]] = 0
         for cliente in df_filtrado['Clientes']:
-            div = categorizar_divisao(cliente)
+            
+            if str(cliente).lower() in df_cop['copacker']:
+                for divisao in df_cop.keys():
+                    
+                    for rotulo in df_cop[divisao]:
+                        if rotulo.upper() in df_filtrado["Rotulo do Produto"].iloc[indice]:
+                            st.write(df_filtrado["Rotulo do Produto"].iloc[indice])
+                            div = divisao
+                            ignorar.append(cliente)
+                            popnoc[div].append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
+                            allnocs.append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
+                            break
+                
+            if(cliente not in ignorar):
+                div = categorizar_divisao(cliente)
             if(df_filtrado['Status'].iloc[indice] != 'CANCELADA' and (pd.isna(cliente) == 0) and div != "outros"):
                 incidentes_anteriores[div][dict_meses[mes_anteriores]] += 1
             indice += 1
 
     
-    st.dataframe(incidentes_anteriores, column_order=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru']]) #incidentes do mes atual
+    st.dataframe(incidentes_anteriores, column_order=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]) #incidentes do mes atual
     col1, col2, col3 = st.columns(3)
     with col1:
-        ka = st.selectbox("selecione um key account", options=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru']])
-        
-
+        ka = st.selectbox("selecione um key account", options=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']])
+          
     st.write(get_text("evaluate_incidents_write"))
+    st.subheader("Clientes Regulares")
     for mes_anteriores in range(1, mes+1):
         df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes_anteriores, ano)
-        
         clientes_permitidos = [str(cliente).lower() for cliente in divisoes[ka]]
     
         mascara_filtragem = df_filtrado['Clientes'].str.lower().isin(clientes_permitidos)
-
+        
         st.write(f"Incidentes - {ka} - {mes_anteriores}/{ano}")
         df_filtrado_2 = df_filtrado[mascara_filtragem]
-        df_filtrado_3 = df_filtrado_2[df_filtrado_2["Status"] != "CANCELADA"]
+        df_filtrado_1 = df_filtrado_2[~df_filtrado["Numero NOC"].astype(int).isin(allnocs)]
+        df_filtrado_3 = df_filtrado_1[df_filtrado_1["Status"] != "CANCELADA"]
         
         st.dataframe(df_filtrado_3)
+    if(popnoc[ka]):
+        st.subheader("Co-packers")
+        
+        df_cop = df_noc[df_noc["Numero NOC"].astype(int).isin(popnoc[ka])]
+        st.dataframe(df_cop)
 
     source = incidentes_anteriores[ka]
     df_source = pd.DataFrame(list(source.items()), columns=['Mês', 'Incidentes'])
@@ -927,7 +949,7 @@ def get_flow(nome_df, noc, linha_noc):
     elif nome_df == "RessarceBall Argentina":
         INITIAL_NODES = [
             # Common End
-            StreamlitFlowNode('SOLICITACIONES CONCLUIDAS (SAP)', (1800, 250), {'content': 'SOLICITACIONES CONCLUIDAS (SAP)'}, 'output', 'left', draggable=False),
+            StreamlitFlowNode('FINALIZADA', (1800, 250), {'content': 'FINALIZADA'}, 'output', 'left', draggable=False),
             # Top Branch
             StreamlitFlowNode('CON DEVOLUCION', (50, 100), {'content': 'CON DEVOLUCION'}, 'input', 'right', draggable=False),
             StreamlitFlowNode('CREAR SOLICITACION DE DEVOLUCION', (300, 100), {'content': 'CREAR SOLICITACION DE DEVOLUCION'}, 'default', 'right', 'left', draggable=False),
@@ -949,21 +971,21 @@ def get_flow(nome_df, noc, linha_noc):
             StreamlitFlowEdge('e_top3', 'PENDIENTE DEL OV - COMERCIAL', 'DATOS DEL RETIRO - LOGISTICA', animated=False),
             StreamlitFlowEdge('e_top4', 'DATOS DEL RETIRO - LOGISTICA', 'INGRESO DE LA DEVOLUCION - EXPEDICION', animated=False),
             StreamlitFlowEdge('e_top5', 'INGRESO DE LA DEVOLUCION - EXPEDICION', 'EMISION DE LA FACTURA', animated=False),
-            StreamlitFlowEdge('e_top_final', 'EMISION DE LA FACTURA', 'SOLICITACIONES CONCLUIDAS (SAP)', animated=False),
+            StreamlitFlowEdge('e_top_final', 'EMISION DE LA FACTURA', 'FINALIZADA', animated=False),
             StreamlitFlowEdge('e_bot1', 'SIN DEVOLUCION', 'CREAR SOLICITACION DE CARTA DE CREDITO', animated=False),
             StreamlitFlowEdge('e_bot2', 'CREAR SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', animated=False),
             StreamlitFlowEdge('e_bot3', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', animated=False),
             StreamlitFlowEdge('e_bot4', 'DATOS DE LO VALOR - PRICING', 'EMISION NOTA DE CREDITO - C2C', animated=False),
             StreamlitFlowEdge('e_bot5', 'EMISION NOTA DE CREDITO - C2C', 'ENVIO AL CLIENTE - CTS', animated=False),
-            StreamlitFlowEdge('e_bot_final', 'ENVIO AL CLIENTE - CTS', 'SOLICITACIONES CONCLUIDAS (SAP)', animated=False),
+            StreamlitFlowEdge('e_bot_final', 'ENVIO AL CLIENTE - CTS', 'FINALIZADA', animated=False),
         ]
-        PATH_TOP = ['CON DEVOLUCION', 'CREAR SOLICITACION DE DEVOLUCION', 'PENDIENTE DEL OV - COMERCIAL', 'DATOS DEL RETIRO - LOGISTICA', 'INGRESO DE LA DEVOLUCION - EXPEDICION', 'EMISION DE LA FACTURA', 'SOLICITACIONES CONCLUIDAS (SAP)']
-        PATH_BOTTOM = ['SIN DEVOLUCION', 'CREAR SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', 'EMISION NOTA DE CREDITO - C2C', 'ENVIO AL CLIENTE - CTS', 'SOLICITACIONES CONCLUIDAS (SAP)']
+        PATH_TOP = ['CON DEVOLUCION', 'CREAR SOLICITACION DE DEVOLUCION', 'PENDIENTE DEL OV - COMERCIAL', 'DATOS DEL RETIRO - LOGISTICA', 'INGRESO DE LA DEVOLUCION - EXPEDICION', 'EMISION DE LA FACTURA', 'FINALIZADA']
+        PATH_BOTTOM = ['SIN DEVOLUCION', 'CREAR SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', 'EMISION NOTA DE CREDITO - C2C', 'ENVIO AL CLIENTE - CTS', 'FINALIZADA']
         PATHS = {'PATH_TOP': PATH_TOP, 'PATH_BOTTOM': PATH_BOTTOM}
 
     elif nome_df == "RessarceBall Chile":
         INITIAL_NODES = [
-            StreamlitFlowNode('SOLICITACIONES CONCLUIDAS (SAP)', (2100, 250), {'content': 'SOLICITACIONES CONCLUIDAS (SAP)'}, 'output', 'left', draggable=False),
+            StreamlitFlowNode('FINALIZADA', (2100, 250), {'content': 'FINALIZADA'}, 'output', 'left', draggable=False),
             # Top Branch
             StreamlitFlowNode('CON DEVOLUCION', (50, 100), {'content': 'CON DEVOLUCION'}, 'input', 'right', draggable=False),
             StreamlitFlowNode('CREAR SOLICITACION CON DEVOLUCION', (300, 100), {'content': 'CREAR SOLICITACION CON DEVOLUCION'}, 'default', 'right', 'left', draggable=False),
@@ -988,17 +1010,17 @@ def get_flow(nome_df, noc, linha_noc):
             StreamlitFlowEdge('e_top4', 'DATOS DE VENTA - EXPEDICION', 'PENDIENTE DEL OV - GDS', animated=False),
             StreamlitFlowEdge('e_top5', 'PENDIENTE DEL OV - GDS', 'INGRESO DE LA DEVOLUCION - EXPEDICION', animated=False),
             StreamlitFlowEdge('e_top6', 'INGRESO DE LA DEVOLUCION - EXPEDICION', 'VALIDACION DEL REMITO DEVOLUCIONES - BP', animated=False),
-            StreamlitFlowEdge('e_top_final', 'VALIDACION DEL REMITO DEVOLUCIONES - BP', 'SOLICITACIONES CONCLUIDAS (SAP)', animated=False),
+            StreamlitFlowEdge('e_top_final', 'VALIDACION DEL REMITO DEVOLUCIONES - BP', 'FINALIZADA', animated=False),
             StreamlitFlowEdge('e_bot1', 'SIN DEVOLUCION', 'CREAR SOLICITACION DE CARTA DE CREDITO', animated=False),
             StreamlitFlowEdge('e_bot2', 'CREAR SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', animated=False),
             StreamlitFlowEdge('e_bot3', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', animated=False),
             StreamlitFlowEdge('e_bot4', 'DATOS DE LO VALOR - PRICING', 'PENDIENTE DE FACTURA - COMERCIAL', animated=False),
             StreamlitFlowEdge('e_bot5', 'PENDIENTE DE FACTURA - COMERCIAL', 'EMISION NOTA DE CREDITO - GDS', animated=False),
             StreamlitFlowEdge('e_bot6', 'EMISION NOTA DE CREDITO - GDS', 'ENVIO AL CLIENTE - COMERCIAL', animated=False),
-            StreamlitFlowEdge('e_bot_final', 'ENVIO AL CLIENTE - COMERCIAL', 'SOLICITACIONES CONCLUIDAS (SAP)', animated=False),
+            StreamlitFlowEdge('e_bot_final', 'ENVIO AL CLIENTE - COMERCIAL', 'FINALIZADA', animated=False),
         ]
-        PATH_TOP = ['CON DEVOLUCION', 'CREAR SOLICITACION CON DEVOLUCION', 'DATOS DEL RETIRO - BP', 'DATOS DE VENTA - EXPEDICION', 'PENDIENTE DEL OV - GDS', 'INGRESO DE LA DEVOLUCION - EXPEDICION', 'VALIDACION DEL REMITO DEVOLUCIONES - BP', 'SOLICITACIONES CONCLUIDAS (SAP)']
-        PATH_BOTTOM = ['SIN DEVOLUCION', 'CREAR SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', 'PENDIENTE DE FACTURA - COMERCIAL', 'EMISION NOTA DE CREDITO - GDS', 'ENVIO AL CLIENTE - COMERCIAL', 'SOLICITACIONES CONCLUIDAS (SAP)']
+        PATH_TOP = ['CON DEVOLUCION', 'CREAR SOLICITACION CON DEVOLUCION', 'DATOS DEL RETIRO - BP', 'DATOS DE VENTA - EXPEDICION', 'PENDIENTE DEL OV - GDS', 'INGRESO DE LA DEVOLUCION - EXPEDICION', 'VALIDACION DEL REMITO DEVOLUCIONES - BP', 'FINALIZADA']
+        PATH_BOTTOM = ['SIN DEVOLUCION', 'CREAR SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', 'PENDIENTE DE FACTURA - COMERCIAL', 'EMISION NOTA DE CREDITO - GDS', 'ENVIO AL CLIENTE - COMERCIAL', 'FINALIZADA']
         PATHS = {'PATH_TOP': PATH_TOP, 'PATH_BOTTOM': PATH_BOTTOM}
 
     elif nome_df == "RessarceBall Paraguai":
@@ -1264,5 +1286,3 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
-
-
