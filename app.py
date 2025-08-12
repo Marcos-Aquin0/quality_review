@@ -86,8 +86,10 @@ if(login_inicio_c or login_inicio_g):
         df_paraguai = st.session_state.dados_carregados.get('df_paraguai')
         df_time = st.session_state.dados_carregados.get('df_time')
         divisoes = st.session_state.dados_carregados.get('divisoes')
+        df_cop = st.session_state.dados_carregados.get('df_cop')
         df_riscos = st.session_state.dados_carregados.get('riscos')
         df_melhorias = st.session_state.dados_carregados.get('melhorias') 
+        df_clientes = st.session_state.dados_carregados.get('df_contas') 
         divisoes_pesquisa = {}
         
         dfs_ressarceball = {
@@ -374,8 +376,9 @@ if(login_inicio_c or login_inicio_g):
 
                             if not df_filtro_noc.empty:
                                 st.write(local)
-                                st.dataframe(df_filtro_noc)
-                                get_flow(local, int(noc_pesquisada), df_filtro_noc.iloc[0])
+                                df_sorted = df_filtro_noc.sort_values(by='ID', ascending=False)
+                                st.dataframe(df_sorted)
+                                get_flow(local, int(noc_pesquisada), df_sorted.iloc[0])
 
                         for local, df_local in dfs_salesforce.items():
                             if local == 'NOCs Salesforce':
@@ -581,8 +584,8 @@ if(login_inicio_c or login_inicio_g):
                 st.dataframe(df_filtrado_melhorias, hide_index=True)
 
         elif selecao_side_bar == get_text("regionais_clientes"):
-            st.subheader(get_text("select_country"))
             
+            st.subheader(get_text("select_country"))
             paises = {
                 "Brasil": "https://upload.wikimedia.org/wikipedia/commons/0/05/Flag_of_Brazil.svg",
                 "Chile": "https://upload.wikimedia.org/wikipedia/commons/7/78/Flag_of_Chile.svg",
@@ -595,10 +598,13 @@ if(login_inicio_c or login_inicio_g):
             html_content_parts = []
             for pais, url_bandeira in paises.items():
                 html_part = f"""
-                <a href='#' id='{pais}'>
-                    <img src='{url_bandeira}' width='150' title='{pais}' 
-                        style='margin: 10px; border: 1px solid #ddd; padding: 5px; border-radius: 5px;'>
-                    <a> {pais} </a>
+                <a href='#' id='{pais}' style='text-decoration: none; color: black; display: inline-block; padding:30px'>
+                    <div style='text-align: center;'>
+                        <img src='{url_bandeira}' width='150' title='{pais}' 
+                            style='margin: 10px; border: 1px solid #ddd; padding: 5px; border-radius: 5px; display: block; margin-left: auto; margin-right: auto;'>
+                        
+                        <span>{pais}</span>
+                    </div>
                 </a>
                 """
                 html_content_parts.append(html_part)
@@ -606,18 +612,28 @@ if(login_inicio_c or login_inicio_g):
             content = "".join(html_content_parts)
             clicked = click_detector(content)
 
-            if clicked == "Brasil":
-                st.success(f"**{clicked}**")
-                df_filtro_click = df_noc[df_noc["Clientes"].astype(str).str.lower().isin(divisoes["regionais_br"])]
-                df_filtro_click_2 = df_rvt[df_rvt["Clientes"].astype(str).str.lower().isin(divisoes["regionais_br"])]
-                df_noc_rvt = pd.concat([df_filtro_click, df_filtro_click_2], ignore_index=True)
-                
-                df_filtro_click_limpo = df_noc_rvt.drop_duplicates(subset=['CodigoCliente', 'Clientes'],keep='first')
-                st.dataframe(df_filtro_click_limpo, hide_index = True, column_order=["CodigoCliente", "Clientes", "Termo_pesquisa", "CidadeCliente", "CodigoCidadeCliente"])
-                
-            elif clicked:
-                st.success(f"**{clicked}**")
-
+            if clicked:
+                with st.container(border=True):
+                    if(clicked == "Brasil"): clicked = "regionais_br"
+                    search_pattern = '|'.join(divisoes[clicked.lower()])
+                    filtro = df_clientes[df_clientes["Name"].astype(str).str.lower().str.contains(search_pattern, na=False)]
+                    df_filtro = pd.DataFrame(filtro)
+                    df_filtro_drop = df_filtro.drop(columns= "Id")
+                    lista_termos = set([termo for termo in df_filtro_drop["Termo_pesquisa"] if not pd.isna(termo)])
+                    df_opcao = st.selectbox("Termo Pesquisa:", lista_termos)
+                    df_filtro_opcao = df_filtro_drop[df_filtro_drop['Termo_pesquisa'] == df_opcao]
+                    
+                    # col1, col2 = st.columns([1,3])
+                    # with col1:
+                    #     foto = df_filtro_opcao["Foto"].iloc[0]
+                    #     if not pd.isna(foto):
+                    #         st.image(str(foto))
+                    # with col2:
+                    # df_filtro_drop2 = df_filtro_opcao.drop(columns= "Foto")
+                    # st.dataframe(df_filtro_drop2, hide_index=True)
+                    st.dataframe(df_filtro_opcao, hide_index=True)
+                st.subheader("Mais Informações")
+            
         elif selecao_side_bar == get_text("where_weve_been_section_title"):
             
             st.info(get_text("where_weve_been_info"))
@@ -762,5 +778,3 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
-
-
