@@ -132,6 +132,7 @@ if(login_inicio_c or login_inicio_g):
                     get_text("noc_rvt_relation_section_title"), 
                     get_text("search_noc_section_title"),
                     get_text("search_rvt_section_title"), 
+                    get_text("rvt_time"),
                     get_text("response_time"),
                     get_text("riscos_melhorias"),
                     get_text("regionais_clientes"),
@@ -140,7 +141,7 @@ if(login_inicio_c or login_inicio_g):
                     get_text("chat_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_g, 
-                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'hammer', 'person', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
         
         elif (login_inicio_c):
@@ -151,6 +152,7 @@ if(login_inicio_c or login_inicio_g):
                     get_text("noc_rvt_relation_section_title"), 
                     get_text("search_noc_section_title"), 
                     get_text("search_rvt_section_title"),
+                    get_text("rvt_time"),
                     get_text("response_time"),
                     get_text("riscos_melhorias"), 
                     get_text("regionais_clientes"),
@@ -158,7 +160,7 @@ if(login_inicio_c or login_inicio_g):
                     get_text("chat_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_c, 
-                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'hammer', 'person', 'map', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'map', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
                 
         if selecao_side_bar == get_text("salesforce_section_title"):
@@ -389,6 +391,15 @@ if(login_inicio_c or login_inicio_g):
                                     st.dataframe(df_filtro_noc)
 
         elif selecao_side_bar == get_text("search_rvt_section_title"):
+            buscaRVT = st.text_input(get_text("type_rvt_number_label"), placeholder=get_text("rvt_placeholder"))
+            if(buscaRVT):
+                linhas_rvt = df_rvt.loc[df_rvt["Numero RVT"] == buscaRVT]
+                if(linhas_rvt.empty):
+                    st.write(get_text("rvt_not_registered_write"))
+                else:
+                    st.dataframe(linhas_rvt)
+
+        elif selecao_side_bar == get_text("rvt_time"):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
@@ -405,12 +416,12 @@ if(login_inicio_c or login_inicio_g):
             st.dataframe(df_rvt_nome_analista, hide_index=True)
 
             get_tempo_rvt(df_rvt_nome_analista)
-
+            
         elif selecao_side_bar == get_text("response_time"):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
-            tab1, tab2, tab3, tab4 = st.tabs(["📗Supervisores", "📘 Especialistas", "📙 Key Accounts", "📕 Analistas"])
+            tab1, tab2, tab3 = st.tabs(["📗Supervisores", "📘 Especialistas", "📙 Key Accounts"])
             with tab1:
                 df_time_filtrado = df_time[df_time['Divisão'] == 'Supervisor']
                 options = list(set(df_time_filtrado['RegiãoSupervisor']))
@@ -567,9 +578,6 @@ if(login_inicio_c or login_inicio_g):
                         st.dataframe(df_filtro_ka_ytd)
                         st.dataframe(df_filtro_ka_ytd.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])    
                         get_tempo_resposta(df_filtro_ka_ytd)
-                
-            with tab4:
-                st.write("Em breve...")
 
         elif selecao_side_bar == get_text("riscos_melhorias"):
             periodo = menu_mensal()
