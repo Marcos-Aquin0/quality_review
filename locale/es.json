@@ -59,6 +59,7 @@
     "key_accounts_clients_write": "Clientes por Key Account",
     "month_info_text": "Estas son las NOCs que no fueron Canceladas, no están en Preenchimento, son Externas y fueron Aprobadas en el período {mes}/{ano} para el {role} {nome}",
     "response_time": "Tiempo de respuesta",
+    "rvt_time": "Tiempo de 1º Contacto",
     "response_time_subheader": "Tiempo de respuesta - {mes}/{ano}",
     "ytd_response_time_subheader": "Tiempo de respuesta - YTD",
     "ytd_info_text": "Estas son las NOCs que no fueron Canceladas, no están en Preenchimento, son Externas y fueron Aprobadas desde el mes 1/{ano} hasta el mes {mes}/{ano} seleccionado para el {role} {nome}",
@@ -86,3 +87,4 @@
     "select_country": "Seleccione el país",
     "riscos_melhorias": "Riesgos y Mejoras"
 }
+
