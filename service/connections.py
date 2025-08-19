@@ -83,7 +83,7 @@ def processar_arquivos_carregados(uploaded_files):
             dados_carregados["df_r_brasil"] = df_r_brasil
             
             df_d_brasil_1 = pd.read_excel(upload_file, sheet_name="DEV_Brasil")
-            df_d_brasil = limpar_df(df_d_brasil_1, colunas_data=["StatusFinal"])
+            df_d_brasil = limpar_df(df_d_brasil_1, colunas_data=["StatusFinal", "DataModificacao"])
             dados_carregados["df_d_brasil"] = df_d_brasil
             
             df_argentina_1 = pd.read_excel(upload_file, sheet_name="Argentina")
@@ -121,3 +121,4 @@ def processar_arquivos_carregados(uploaded_files):
         
         
     return dados_carregados
+
