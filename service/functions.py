@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from collections import defaultdict
 import streamlit as st
 import unidecode
@@ -843,6 +843,20 @@ def get_tempo_resposta(df_filtro):
 
     if(media_dias > 0): st.metric("Média de Dias", media_dias)
 
+def calcular_fim_semana(data_inicio, data_fim):
+    dias_de_fim_de_semana = 0
+    data_inicio = pd.to_datetime(data_inicio, format="%d/%m/%Y" )
+    data_fim = pd.to_datetime(data_fim, format="%d/%m/%Y" )
+    while data_inicio <= data_fim:
+        # O método weekday() retorna:
+        # Segunda-feira = 0, Terça-feira = 1, ..., Sábado = 5, Domingo = 6
+        if data_inicio.weekday() >= 5:  # Se for sábado (5) ou domingo (6)
+            dias_de_fim_de_semana += 1
+        
+        # Avança para o próximo dia
+        data_inicio += timedelta(days=1)
+    return dias_de_fim_de_semana
+
 def get_tempo_rvt(df_filtro):
     lista_tempo_resposta = []
 
@@ -851,11 +865,12 @@ def get_tempo_rvt(df_filtro):
         rvt = linha_sup['Numero RVT']
         data_1Contato = linha_sup['Data1ContatoCliente']
         data_reclamacao = linha_sup['DataReclamacao']
-        data_inicio = linha_sup['DataInicio']
+        data_fim = linha_sup['DataFim']
         data_criacao = linha_sup['DataCriacao']
 
-        tempo_reclamacao = calcular_tempo(data_inicio, data_criacao)
-        tempo_contato = calcular_tempo(data_1Contato, data_reclamacao)
+        tempo_reclamacao = calcular_tempo(data_fim, data_criacao) - calcular_fim_semana(data_fim, data_criacao)
+        tempo_contato = calcular_tempo(data_1Contato, data_reclamacao) - calcular_fim_semana(data_1Contato, data_reclamacao)
+
         lista_tempo_resposta.append({
                 "Numero RVT": rvt,
                 "Tempo de Emissão (dias)": tempo_reclamacao,
@@ -1286,3 +1301,4 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
+
