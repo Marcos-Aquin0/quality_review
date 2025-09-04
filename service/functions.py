@@ -306,7 +306,7 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
                     
                     for rotulo in df_cop[divisao]:
                         if rotulo.upper() in df_filtrado["Rotulo do Produto"].iloc[indice]:
-                            st.write(df_filtrado["Rotulo do Produto"].iloc[indice])
+                            #st.write(df_filtrado["Rotulo do Produto"].iloc[indice])
                             div = divisao
                             ignorar.append(cliente)
                             popnoc[div].append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
@@ -375,9 +375,10 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
     base_download = alt.Chart(df_source).encode(
         x=alt.X('Incidentes'),
         y=alt.Y('Mês', sort=alt.EncodingSortField(field="MonthOrder", op="min", order='ascending'), axis=alt.Axis(
-            labelFontSize=14,  
+            labelFontSize=16,  
             titleFontSize=16,  
-            labelColor="#ffffff"    
+            labelColor="#ffffff",
+            labelFontWeight='bold'
         )), 
         text='Incidentes'
     ).properties(
@@ -385,7 +386,7 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
         height=260       
     )
 
-    chart_for_download = base_download.mark_bar(color="#fefefe") + base_download.mark_text(align='left', dx=2, color='#ffffff', fontSize=14)
+    chart_for_download = base_download.mark_bar(color="#fefefe") + base_download.mark_text(align='left', dx=2, color='#ffffff', fontSize=16, fontWeight='bold')
     chart_for_download = chart_for_download.configure(background='#ffffff00')
     png_buffer = io.BytesIO()
     chart_for_download.save(png_buffer, format='png')
@@ -1301,4 +1302,5 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
+
 
