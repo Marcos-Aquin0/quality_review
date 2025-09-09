@@ -10,7 +10,7 @@ import json
 
 load_dotenv()
 
-from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt
+from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt, get_incidentes_nps
 from service.connections import processar_arquivos_carregados
 
 
@@ -89,7 +89,7 @@ if(login_inicio_c or login_inicio_g):
         df_cop = st.session_state.dados_carregados.get('df_cop')
         df_riscos = st.session_state.dados_carregados.get('riscos')
         df_melhorias = st.session_state.dados_carregados.get('melhorias') 
-    
+       
         divisoes_pesquisa = {}
         
         dfs_ressarceball = {
@@ -135,12 +135,14 @@ if(login_inicio_c or login_inicio_g):
                     get_text("rvt_time"),
                     get_text("response_time"),
                     get_text("riscos_melhorias"),
+                    get_text("NPS"),
+                    
                     get_text("where_weve_been_section_title"),  
                     get_text("cts_managers_section_title"), 
                     get_text("chat_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_g, 
-                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'person', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
         
         elif (login_inicio_c):
@@ -154,11 +156,13 @@ if(login_inicio_c or login_inicio_g):
                     get_text("rvt_time"),
                     get_text("response_time"),
                     get_text("riscos_melhorias"), 
+                    get_text("NPS"),
+                    
                     get_text("where_weve_been_section_title"), 
                     get_text("chat_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_c, 
-                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'map', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'person', 'map', 'chat'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
                 
         if selecao_side_bar == get_text("salesforce_section_title"):
@@ -522,7 +526,7 @@ if(login_inicio_c or login_inicio_g):
                         st.dataframe(df_filtro_sup_ytd)
                         get_tempo_resposta(df_filtro_sup_ytd)
             with tab3:  
-                options = [div for div in divisoes.keys() if div not in ['planta_ball', 'argentina', 'peru', 'chile', 'paraguai', 'bolivia']]
+                options = [div for div in divisoes.keys() if div != 'planta_ball']
                 df_time_filtrado = df_time[df_time['Divisão'] == 'Key Account']
                 selection = st.segmented_control(
                     "Key Accounts", options, selection_mode="single"
@@ -588,7 +592,44 @@ if(login_inicio_c or login_inicio_g):
             with tab2:    
                 df_filtrado_melhorias = filtrar_por_mes(df_melhorias, "DataCriacao", mes, ano)
                 st.dataframe(df_filtrado_melhorias, hide_index=True)
+
+        elif selecao_side_bar == get_text("NPS"):
             
+            st.subheader("Perfil por Key Account")
+            periodo = menu_mensal()
+            mes = periodo[0]
+            ano = periodo[1]
+
+            #selecionar ka
+
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                with st.container(border=True):
+                    st.write("Incidentes YTD")
+                    get_incidentes_nps(df_noc, mes, ano)
+            with col2:
+                with st.container(border=True):
+                    st.write("Latas e Tampas")
+            with col3:
+                with st.container(border=True):
+                    st.write("Parecer")
+            with col4:
+                with st.container(border=True):
+                    st.write("Tratativa Final")
+            
+            #devolucao ressarcimento e cartas de credito para latas e tampas
+
+            cl1, cl2, cl3 = st.columns(3)
+            with cl1:
+                with st.container(border=True):
+                    st.write("TOP 10 Defeitos")
+            with cl2:
+                with st.container(border=True):
+                    st.write("Incidentes por Fabricante")
+            with cl3:
+                with st.container(border=True):
+                    st.write("Número de Incidentes Abertos por Planta")
+    
         elif selecao_side_bar == get_text("where_weve_been_section_title"):
             
             st.info(get_text("where_weve_been_info"))
@@ -616,124 +657,122 @@ if(login_inicio_c or login_inicio_g):
         elif selecao_side_bar == get_text("cts_managers_section_title"):
             
             st.write(get_text("select_month_year_write"))
-            mes = st.number_input(get_text("month_input_label"),min_value=6, max_value=12, step=6)
-            ano = st.number_input(get_text("year_input_label"),min_value=2023, step=1)
-
-            with st.container(border=True):
-                get_tipos_visitas_rvt_semestre(df_rvt, mes, ano)
+            periodo = menu_mensal()
+            mes = periodo[0]
+            ano = periodo[1]
+            
+            # with st.container(border=True):
+            #     get_tipos_visitas_rvt_semestre(df_rvt, mes, ano)
             with st.container(border=True):
                 get_rvt_by_person_semestre(df_rvt, mes, ano)
-            with st.container(border=True):
-                get_qr_cliente_ball_semestre(df_rvt, mes, ano)
-            with st.container(border=True):
-                get_qtd_treinamentos_semestre(df_rvt, mes, ano)
-            with st.container(border=True):
-                st.subheader("RessarceBall")
+            # with st.container(border=True):
+            #     get_qr_cliente_ball_semestre(df_rvt, mes, ano)
+            # with st.container(border=True):
+            #     get_qtd_treinamentos_semestre(df_rvt, mes, ano)
+            # with st.container(border=True):
+            #     st.subheader("RessarceBall")
 
-                if(mes==12): 
-                    init= 7
+            #     if(mes==12): 
+            #         init= 7
 
-                elif(mes==6): 
-                    init=1
+            #     elif(mes==6): 
+            #         init=1
                 
-                tempo_resposta_niveis_br = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-                tempo_resposta_niveis_arg = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-                tempo_resposta_niveis_chi = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-                tempo_resposta_niveis_py = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
+            #     tempo_resposta_niveis_br = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
+            #     tempo_resposta_niveis_arg = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
+            #     tempo_resposta_niveis_chi = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
+            #     tempo_resposta_niveis_py = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
 
-                for mes_anteriores in range(init, mes+1):
-                    get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Data da Ultima Modificação - Ressarcimento - Tipo de Ressarcimento', 'Investigação', tempo_resposta_niveis_br)
-                    get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Data da Ultima Modificação - Bonificações Alocadas', 'Bonificação', tempo_resposta_niveis_br)
-                    get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Emissão Gerente CTS em', 'Carta de Crédito', tempo_resposta_niveis_br)
+            #     for mes_anteriores in range(init, mes+1):
+            #         get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Data da Ultima Modificação - Ressarcimento - Tipo de Ressarcimento', 'Investigação', tempo_resposta_niveis_br)
+            #         get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Data da Ultima Modificação - Bonificações Alocadas', 'Bonificação', tempo_resposta_niveis_br)
+            #         get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Emissão Gerente CTS em', 'Carta de Crédito', tempo_resposta_niveis_br)
 
-                    get_time_for_each_level(mes_anteriores, ano, df_d_brasil, df_noc, 'Data de Ultima Modificação - Solicitação de Devolução', 'Investigação', tempo_resposta_niveis_br)
-                    get_time_for_each_level(mes_anteriores, ano, df_d_brasil, df_noc, 'Data de Ultima Modificação - Aprovação dos Registros', 'Devolução', tempo_resposta_niveis_br)
-
-
-                    get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataCriacao', 'Investigação', tempo_resposta_niveis_arg)
-                    get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_arg) 
-                    get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_arg)
+            #         get_time_for_each_level(mes_anteriores, ano, df_d_brasil, df_noc, 'Data de Ultima Modificação - Solicitação de Devolução', 'Investigação', tempo_resposta_niveis_br)
+            #         get_time_for_each_level(mes_anteriores, ano, df_d_brasil, df_noc, 'Data de Ultima Modificação - Aprovação dos Registros', 'Devolução', tempo_resposta_niveis_br)
 
 
-                    get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataCriacao', 'Investigação', tempo_resposta_niveis_chi)
-                    get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_chi) 
-                    get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_chi) 
+            #         get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataCriacao', 'Investigação', tempo_resposta_niveis_arg)
+            #         get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_arg) 
+            #         get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_arg)
 
 
-                    get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'Solicitación criada en', 'Investigação', tempo_resposta_niveis_py)
-                    get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_py)
-                    get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_py)
+            #         get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataCriacao', 'Investigação', tempo_resposta_niveis_chi)
+            #         get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_chi) 
+            #         get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_chi) 
 
-                options = ["Brasil", "Paraguai", "Chile", "Argentina"]
-                select_rb_s = ""
-                select_rb_s = st.segmented_control(
-                    "País RessarceBall", options, selection_mode="multi"
-                )
 
-                resultados = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-                retorno = ['Investigação', 'Devolução', 'Bonificação', 'Carta de Crédito']
+            #         get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'Solicitación criada en', 'Investigação', tempo_resposta_niveis_py)
+            #         get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_py)
+            #         get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_py)
 
-                for pais in select_rb_s:
-                    if(pais == "Brasil"): 
-                        tempo_resposta = tempo_resposta_niveis_br
-                        st.write("dados Brasil")
-                        st.dataframe(tempo_resposta_niveis_br)
-                        # st.dataframe(df_d_brasil)
-                        # st.dataframe(df_r_brasil)
-                    elif(pais == "Argentina"): 
-                        tempo_resposta = tempo_resposta_niveis_arg
-                        st.write("dados Argentina")
-                        st.dataframe(tempo_resposta_niveis_arg)
-                        # st.dataframe(df_argentina)
-                    elif(pais == "Chile"): 
-                        tempo_resposta = tempo_resposta_niveis_chi
-                        st.write("dados Chile")
-                        st.dataframe(tempo_resposta_niveis_chi)
-                        # st.dataframe(df_chile)
-                    elif(pais == "Paraguai"): 
-                        tempo_resposta = tempo_resposta_niveis_py
-                        st.write("dados Paraguai")
-                        st.dataframe(tempo_resposta_niveis_py)
-                        # st.dataframe(df_paraguai)
-                    else:
-                        st.write("selecione um ou mais países")
-                    for chave, item in tempo_resposta.items():
-                        resultados[chave]['acumulado'] += tempo_resposta[chave]['acumulado']
-                        resultados[chave]['qtd'] += tempo_resposta[chave]['qtd']  
+            #     options = ["Brasil", "Paraguai", "Chile", "Argentina"]
+            #     select_rb_s = ""
+            #     select_rb_s = st.segmented_control(
+            #         "País RessarceBall", options, selection_mode="multi"
+            #     )
 
-                valores = []
-                for chave in resultados.keys():
-                    if(resultados[chave]['qtd'] == 0): 
-                        valores.append(0)
-                    else:
-                        valores.append(round(resultados[chave]['acumulado']/resultados[chave]['qtd']))
+            #     resultados = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
+            #     retorno = ['Investigação', 'Devolução', 'Bonificação', 'Carta de Crédito']
+
+            #     for pais in select_rb_s:
+            #         if(pais == "Brasil"): 
+            #             tempo_resposta = tempo_resposta_niveis_br
+            #             st.write("dados Brasil")
+            #             st.dataframe(tempo_resposta_niveis_br)
+            #             # st.dataframe(df_d_brasil)
+            #             # st.dataframe(df_r_brasil)
+            #         elif(pais == "Argentina"): 
+            #             tempo_resposta = tempo_resposta_niveis_arg
+            #             st.write("dados Argentina")
+            #             st.dataframe(tempo_resposta_niveis_arg)
+            #             # st.dataframe(df_argentina)
+            #         elif(pais == "Chile"): 
+            #             tempo_resposta = tempo_resposta_niveis_chi
+            #             st.write("dados Chile")
+            #             st.dataframe(tempo_resposta_niveis_chi)
+            #             # st.dataframe(df_chile)
+            #         elif(pais == "Paraguai"): 
+            #             tempo_resposta = tempo_resposta_niveis_py
+            #             st.write("dados Paraguai")
+            #             st.dataframe(tempo_resposta_niveis_py)
+            #             # st.dataframe(df_paraguai)
+            #         else:
+            #             st.write("selecione um ou mais países")
+            #         for chave, item in tempo_resposta.items():
+            #             resultados[chave]['acumulado'] += tempo_resposta[chave]['acumulado']
+            #             resultados[chave]['qtd'] += tempo_resposta[chave]['qtd']  
+
+            #     valores = []
+            #     for chave in resultados.keys():
+            #         if(resultados[chave]['qtd'] == 0): 
+            #             valores.append(0)
+            #         else:
+            #             valores.append(round(resultados[chave]['acumulado']/resultados[chave]['qtd']))
             
-                df_dados_grafico = pd.DataFrame({
-                    'tipo': retorno,
-                    'média de dias': valores
-                })
+            #     df_dados_grafico = pd.DataFrame({
+            #         'tipo': retorno,
+            #         'média de dias': valores
+            #     })
 
-                tipos = alt.Chart(df_dados_grafico).encode(
-                    x=alt.X('tipo', axis=alt.Axis(
-                                labelFontSize=14,  
-                                titleFontSize=16,  
-                                labelColor="#000000"    
-                            )),
-                    y=alt.Y('média de dias')
-                )
+            #     tipos = alt.Chart(df_dados_grafico).encode(
+            #         x=alt.X('tipo', axis=alt.Axis(
+            #                     labelFontSize=14,  
+            #                     titleFontSize=16,  
+            #                     labelColor="#000000"    
+            #                 )),
+            #         y=alt.Y('média de dias')
+            #     )
 
-                chart = tipos.mark_bar() + tipos.mark_text(align='center', baseline='bottom', dy=-2, color="#000000", fontSize=15, fontWeight='bold').encode(text=alt.Text('média de dias') )
+            #     chart = tipos.mark_bar() + tipos.mark_text(align='center', baseline='bottom', dy=-2, color="#000000", fontSize=15, fontWeight='bold').encode(text=alt.Text('média de dias') )
 
-                st.altair_chart(chart.properties(height=450, width=700), use_container_width=False)
+            #     st.altair_chart(chart.properties(height=450, width=700), use_container_width=False)
 
         elif selecao_side_bar == get_text("chat_section_title"):
             st.write("Em breve...")
             # latinha = str(os.getenv("latinha"))
             # st.image(image=latinha)
+            
 
     else:
         st.warning(get_text("upload_warning"))
-
-
-
-
