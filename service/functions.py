@@ -1,5 +1,6 @@
 import pandas as pd
-from datetime import datetime, date, timedelta
+from datetime import datetime
+from datetime import date, timedelta
 from collections import defaultdict
 import streamlit as st
 import unidecode
@@ -306,7 +307,7 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
                     
                     for rotulo in df_cop[divisao]:
                         if rotulo.upper() in df_filtrado["Rotulo do Produto"].iloc[indice]:
-                            #st.write(df_filtrado["Rotulo do Produto"].iloc[indice])
+                            # st.write(df_filtrado["Rotulo do Produto"].iloc[indice])
                             div = divisao
                             ignorar.append(cliente)
                             popnoc[div].append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
@@ -378,7 +379,7 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
             labelFontSize=16,  
             titleFontSize=16,  
             labelColor="#ffffff",
-            labelFontWeight='bold'
+            labelFontWeight='bold'    
         )), 
         text='Incidentes'
     ).properties(
@@ -483,7 +484,7 @@ def get_tipos_visitas_rvt_semestre(df_rvt, mes, ano):
             dados_preparados = []
             for i, dados in enumerate(lista_dados):
                 if(mes==12): 
-                    i+=5
+                    i+=6
                 dados_preparados.append({"Mês": f"{mes_data[i]}", "Tipo de Visita": "Corretiva", "Quantidade": dados["corretiva"]})
                 dados_preparados.append({"Mês": f"{mes_data[i]}", "Tipo de Visita": "Preventiva", "Quantidade": dados["preventiva"]})
 
@@ -530,7 +531,7 @@ def get_tipos_visitas_rvt_semestre(df_rvt, mes, ano):
                 init=1
                 mes=6
             elif(mes==6): 
-                init=6
+                init=7
                 mes=12
                 ano = ano-1
             
@@ -555,22 +556,15 @@ def get_tipos_visitas_rvt_semestre(df_rvt, mes, ano):
             
 def get_rvt_by_person_semestre(df_rvt, mes, ano):
     df_time = st.session_state.dados_carregados.get('df_time')
-    if(mes==12): 
-        init= 7
-    elif(mes==6): 
-        init=1
     mes_data = ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
     
     dados_atuais = defaultdict(int)
-    for mes_anteriores in range(init, mes+1):
-        df_filtrado_mes = filtrar_por_mes(df_rvt, 'DataInicio', mes_anteriores, ano) #por que data início e não data de criação do RVT?
-        indice = 0
-        # st.write(mes_data[mes_anteriores-1])
-        # st.dataframe(df_filtrado_mes)
-        for responsavel in df_filtrado_mes['ResponsavelBall']:
-            if responsavel != os.getenv("nome_ignorado1") and responsavel != os.getenv("nome_ignorado2"):
-                dados_atuais[responsavel] += 1
-            indice +=1
+    df_filtrado_mes = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano) #por que data início e não data de criação do RVT?
+    indice = 0
+    for responsavel in df_filtrado_mes['ResponsavelBall']:
+        if responsavel != os.getenv("nome_ignorado1") and responsavel != os.getenv("nome_ignorado2"):
+            dados_atuais[responsavel] += 1
+        indice +=1
 
     source = dados_atuais
     df_source = pd.DataFrame(list(source.items()), columns=['Nome', 'QTD RVT'])
@@ -617,7 +611,7 @@ def get_rvt_by_person_semestre(df_rvt, mes, ano):
     ).properties(
         width=800, 
         height=900,
-        title=f"RVTs por pessoa no {int(mes/6)}º Semestre de {ano}"
+        title=f"RVTs por pessoa em {int(mes)}/{ano} - anônimo"
     )
 
     chart_anonimo = base.mark_bar(color="#26a72c") + base.mark_text(align='left', dx=2, color="#090909", fontSize=14)
@@ -634,7 +628,7 @@ def get_rvt_by_person_semestre(df_rvt, mes, ano):
     ).properties(
         width=800, 
         height=900,
-        title=f"RVTs por pessoa no {int(mes/6)}º Semestre de {ano}"
+        title=f"RVTs por pessoa em {int(mes)}/{ano}"
     )
 
     chart_source = base.mark_bar(color="#26a72c") + base.mark_text(align='left', dx=2, color="#090909", fontSize=14)
@@ -876,6 +870,7 @@ def get_tempo_rvt(df_filtro):
         if(tempo_contato != "-"):
             tempo_contato = tempo_contato - calcular_fim_semana(data_1Contato, data_reclamacao)
 
+
         lista_tempo_resposta.append({
                 "Numero RVT": rvt,
                 "Tempo de Emissão (dias)": tempo_reclamacao,
@@ -899,6 +894,50 @@ def get_tempo_rvt(df_filtro):
         tempos = pd.to_numeric(df_rvt_tempo_resposta['Tempo de 1º Contato (dias)'], errors='coerce')
         media_dias = round(tempos.mean(), 1)
         st.metric("Média de Tempo de 1º Contato RVT Corretivo", media_dias)
+
+def get_incidentes_nps(df_noc, mes, ano):
+    divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
+    incidentes_anteriores = {}
+    popnoc = {}
+    allnocs = []
+    for mes_anteriores in range(1, mes+1):
+        df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes_anteriores, ano)
+        indice = 0
+        ignorar = []
+        for div in divisoes.keys():
+            if(div not in incidentes_anteriores):
+                incidentes_anteriores[div] = {}
+                popnoc[div] = []
+            if(dict_meses[mes_anteriores] not in incidentes_anteriores[div]):
+                incidentes_anteriores[div][dict_meses[mes_anteriores]] = 0
+        for cliente in df_filtrado['Clientes']:
+            
+            if str(cliente).lower() in df_cop['copacker']:
+                for divisao in df_cop.keys():
+                    
+                    for rotulo in df_cop[divisao]:
+                        if rotulo.upper() in df_filtrado["Rotulo do Produto"].iloc[indice]:
+
+                            div = divisao
+                            ignorar.append(cliente)
+                            popnoc[div].append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
+                            allnocs.append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
+                            break
+                
+            if(cliente not in ignorar):
+                div = categorizar_divisao(cliente)
+            if(df_filtrado['Status'].iloc[indice] != 'CANCELADA' and (pd.isna(cliente) == 0) and div != "outros"):
+                incidentes_anteriores[div][dict_meses[mes_anteriores]] += 1
+            indice += 1
+
+    
+    ka = st.selectbox("selecione um key account", options=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']])
+      
+    source = incidentes_anteriores[ka]
+    df_source = pd.DataFrame(list(source.items()), columns=['Mês', 'Incidentes'])
+
+    st.metric("",df_source["Incidentes"].sum())
 
 def get_flow(nome_df, noc, linha_noc):
     if 'flow_state' not in st.session_state:
@@ -1306,7 +1345,3 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
-
-
-
-
