@@ -135,7 +135,6 @@ if(login_inicio_c or login_inicio_g):
                     get_text("rvt_time"),
                     get_text("response_time"),
                     get_text("riscos_melhorias"),
-                    get_text("regionais_clientes"),
                     get_text("where_weve_been_section_title"),  
                     get_text("cts_managers_section_title"), 
                     get_text("chat_section_title")
@@ -155,7 +154,6 @@ if(login_inicio_c or login_inicio_g):
                     get_text("rvt_time"),
                     get_text("response_time"),
                     get_text("riscos_melhorias"), 
-                    get_text("regionais_clientes"),
                     get_text("where_weve_been_section_title"), 
                     get_text("chat_section_title")
                 ]
@@ -590,57 +588,6 @@ if(login_inicio_c or login_inicio_g):
             with tab2:    
                 df_filtrado_melhorias = filtrar_por_mes(df_melhorias, "DataCriacao", mes, ano)
                 st.dataframe(df_filtrado_melhorias, hide_index=True)
-
-        elif selecao_side_bar == get_text("regionais_clientes"):
-            
-            st.subheader(get_text("select_country"))
-            paises = {
-                "Brasil": "https://upload.wikimedia.org/wikipedia/commons/0/05/Flag_of_Brazil.svg",
-                "Chile": "https://upload.wikimedia.org/wikipedia/commons/7/78/Flag_of_Chile.svg",
-                "Argentina": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Flag_of_Argentina.svg",
-                "Bolivia": "https://upload.wikimedia.org/wikipedia/commons/d/de/Flag_of_Bolivia_%28state%29.svg",
-                "Paraguai": "https://upload.wikimedia.org/wikipedia/commons/2/27/Flag_of_Paraguay.svg",
-                "Peru": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Flag_of_Peru.svg",
-            }
-
-            html_content_parts = []
-            for pais, url_bandeira in paises.items():
-                html_part = f"""
-                <a href='#' id='{pais}' style='text-decoration: none; color: black; display: inline-block; padding:30px'>
-                    <div style='text-align: center;'>
-                        <img src='{url_bandeira}' width='150' title='{pais}' 
-                            style='margin: 10px; border: 1px solid #ddd; padding: 5px; border-radius: 5px; display: block; margin-left: auto; margin-right: auto;'>
-                        
-                        <span>{pais}</span>
-                    </div>
-                </a>
-                """
-                html_content_parts.append(html_part)
-
-            content = "".join(html_content_parts)
-            clicked = click_detector(content)
-
-            if clicked:
-                with st.container(border=True):
-                    if(clicked == "Brasil"): clicked = "regionais_br"
-                    search_pattern = '|'.join(divisoes[clicked.lower()])
-                    filtro = df_clientes[df_clientes["Name"].astype(str).str.lower().str.contains(search_pattern, na=False)]
-                    df_filtro = pd.DataFrame(filtro)
-                    df_filtro_drop = df_filtro.drop(columns= "Id")
-                    lista_termos = set([termo for termo in df_filtro_drop["Termo_pesquisa"] if not pd.isna(termo)])
-                    df_opcao = st.selectbox("Termo Pesquisa:", lista_termos)
-                    df_filtro_opcao = df_filtro_drop[df_filtro_drop['Termo_pesquisa'] == df_opcao]
-                    
-                    # col1, col2 = st.columns([1,3])
-                    # with col1:
-                    #     foto = df_filtro_opcao["Foto"].iloc[0]
-                    #     if not pd.isna(foto):
-                    #         st.image(str(foto))
-                    # with col2:
-                    # df_filtro_drop2 = df_filtro_opcao.drop(columns= "Foto")
-                    # st.dataframe(df_filtro_drop2, hide_index=True)
-                    st.dataframe(df_filtro_opcao, hide_index=True)
-                st.subheader("Mais Informações")
             
         elif selecao_side_bar == get_text("where_weve_been_section_title"):
             
@@ -786,4 +733,5 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
