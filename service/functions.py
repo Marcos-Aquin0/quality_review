@@ -458,7 +458,7 @@ def get_time_for_each_level(mes, ano, db, df_noc, coluna_data, tipo_retorno, tem
     
 def get_tipos_visitas_rvt_semestre(df_rvt, mes, ano):   
             if(mes==12): 
-                init= 6
+                init= 7
 
             elif(mes==6): 
                 init=1
@@ -556,7 +556,7 @@ def get_tipos_visitas_rvt_semestre(df_rvt, mes, ano):
 def get_rvt_by_person_semestre(df_rvt, mes, ano):
     df_time = st.session_state.dados_carregados.get('df_time')
     if(mes==12): 
-        init= 6
+        init= 7
     elif(mes==6): 
         init=1
     mes_data = ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -646,7 +646,7 @@ def get_rvt_by_person_semestre(df_rvt, mes, ano):
 
 def get_qr_cliente_ball_semestre(df_rvt, mes, ano):   
     if(mes==12): 
-        init= 6
+        init= 7
 
     elif(mes==6): 
         init=1
@@ -729,7 +729,7 @@ def get_qr_cliente_ball_semestre(df_rvt, mes, ano):
 def get_qtd_treinamentos_semestre(df_rvt, mes, ano):
     divisoes = st.session_state.dados_carregados.get('divisoes')
     if(mes==12): 
-        init= 6
+        init= 7
 
     elif(mes==6): 
         init=1
@@ -1306,6 +1306,7 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
+
 
 
 
