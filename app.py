@@ -631,7 +631,7 @@ if(login_inicio_c or login_inicio_g):
                 st.subheader("RessarceBall")
 
                 if(mes==12): 
-                    init= 6
+                    init= 7
 
                 elif(mes==6): 
                     init=1
@@ -733,6 +733,7 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
 
 
