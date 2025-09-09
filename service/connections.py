@@ -44,8 +44,6 @@ def processar_arquivos_carregados(uploaded_files):
                 divisoes_pesquisa = {}
                 dados_carregados["divisoes"] = divisoes
                 
-                df_contas = pd.read_excel(upload_file, sheet_name="Contas")
-                dados_carregados["df_contas"] = df_contas
 
                 df_cop1 = pd.read_excel(upload_file, sheet_name="copacker")
                 df_temp1 = df_cop1.set_index('divisao')
@@ -121,4 +119,5 @@ def processar_arquivos_carregados(uploaded_files):
         
         
     return dados_carregados
+
 
