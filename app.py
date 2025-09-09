@@ -89,7 +89,7 @@ if(login_inicio_c or login_inicio_g):
         df_cop = st.session_state.dados_carregados.get('df_cop')
         df_riscos = st.session_state.dados_carregados.get('riscos')
         df_melhorias = st.session_state.dados_carregados.get('melhorias') 
-        df_clientes = st.session_state.dados_carregados.get('df_contas') 
+    
         divisoes_pesquisa = {}
         
         dfs_ressarceball = {
@@ -733,5 +733,6 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
 
