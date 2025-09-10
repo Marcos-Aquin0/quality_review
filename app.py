@@ -656,117 +656,82 @@ if(login_inicio_c or login_inicio_g):
 
         elif selecao_side_bar == get_text("cts_managers_section_title"):
             
-            st.write(get_text("select_month_year_write"))
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
             
-            # with st.container(border=True):
-            #     get_tipos_visitas_rvt_semestre(df_rvt, mes, ano)
             with st.container(border=True):
                 get_rvt_by_person_semestre(df_rvt, mes, ano)
-            # with st.container(border=True):
-            #     get_qr_cliente_ball_semestre(df_rvt, mes, ano)
-            # with st.container(border=True):
-            #     get_qtd_treinamentos_semestre(df_rvt, mes, ano)
-            # with st.container(border=True):
-            #     st.subheader("RessarceBall")
-
-            #     if(mes==12): 
-            #         init= 7
-
-            #     elif(mes==6): 
-            #         init=1
-                
-            #     tempo_resposta_niveis_br = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-            #     tempo_resposta_niveis_arg = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-            #     tempo_resposta_niveis_chi = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-            #     tempo_resposta_niveis_py = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-
-            #     for mes_anteriores in range(init, mes+1):
-            #         get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Data da Ultima Modificação - Ressarcimento - Tipo de Ressarcimento', 'Investigação', tempo_resposta_niveis_br)
-            #         get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Data da Ultima Modificação - Bonificações Alocadas', 'Bonificação', tempo_resposta_niveis_br)
-            #         get_time_for_each_level(mes_anteriores, ano, df_r_brasil, df_noc, 'Emissão Gerente CTS em', 'Carta de Crédito', tempo_resposta_niveis_br)
-
-            #         get_time_for_each_level(mes_anteriores, ano, df_d_brasil, df_noc, 'Data de Ultima Modificação - Solicitação de Devolução', 'Investigação', tempo_resposta_niveis_br)
-            #         get_time_for_each_level(mes_anteriores, ano, df_d_brasil, df_noc, 'Data de Ultima Modificação - Aprovação dos Registros', 'Devolução', tempo_resposta_niveis_br)
-
-
-            #         get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataCriacao', 'Investigação', tempo_resposta_niveis_arg)
-            #         get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_arg) 
-            #         get_time_for_each_level(mes_anteriores, ano, df_argentina, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_arg)
-
-
-            #         get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataCriacao', 'Investigação', tempo_resposta_niveis_chi)
-            #         get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_chi) 
-            #         get_time_for_each_level(mes_anteriores, ano, df_chile, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_chi) 
-
-
-            #         get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'Solicitación criada en', 'Investigação', tempo_resposta_niveis_py)
-            #         get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'DataFinal - Devolução', 'Devolução', tempo_resposta_niveis_py)
-            #         get_time_for_each_level(mes_anteriores, ano, df_paraguai, df_noc, 'DataFinal - Ressarcimento', 'Carta de Crédito', tempo_resposta_niveis_py)
-
-            #     options = ["Brasil", "Paraguai", "Chile", "Argentina"]
-            #     select_rb_s = ""
-            #     select_rb_s = st.segmented_control(
-            #         "País RessarceBall", options, selection_mode="multi"
-            #     )
-
-            #     resultados = {'Investigação':{'acumulado':0, 'qtd':0}, 'Devolução': {'acumulado':0, 'qtd':0}, 'Bonificação': {'acumulado':0, 'qtd':0}, 'Carta de Crédito': {'acumulado':0, 'qtd':0}}
-            #     retorno = ['Investigação', 'Devolução', 'Bonificação', 'Carta de Crédito']
-
-            #     for pais in select_rb_s:
-            #         if(pais == "Brasil"): 
-            #             tempo_resposta = tempo_resposta_niveis_br
-            #             st.write("dados Brasil")
-            #             st.dataframe(tempo_resposta_niveis_br)
-            #             # st.dataframe(df_d_brasil)
-            #             # st.dataframe(df_r_brasil)
-            #         elif(pais == "Argentina"): 
-            #             tempo_resposta = tempo_resposta_niveis_arg
-            #             st.write("dados Argentina")
-            #             st.dataframe(tempo_resposta_niveis_arg)
-            #             # st.dataframe(df_argentina)
-            #         elif(pais == "Chile"): 
-            #             tempo_resposta = tempo_resposta_niveis_chi
-            #             st.write("dados Chile")
-            #             st.dataframe(tempo_resposta_niveis_chi)
-            #             # st.dataframe(df_chile)
-            #         elif(pais == "Paraguai"): 
-            #             tempo_resposta = tempo_resposta_niveis_py
-            #             st.write("dados Paraguai")
-            #             st.dataframe(tempo_resposta_niveis_py)
-            #             # st.dataframe(df_paraguai)
-            #         else:
-            #             st.write("selecione um ou mais países")
-            #         for chave, item in tempo_resposta.items():
-            #             resultados[chave]['acumulado'] += tempo_resposta[chave]['acumulado']
-            #             resultados[chave]['qtd'] += tempo_resposta[chave]['qtd']  
-
-            #     valores = []
-            #     for chave in resultados.keys():
-            #         if(resultados[chave]['qtd'] == 0): 
-            #             valores.append(0)
-            #         else:
-            #             valores.append(round(resultados[chave]['acumulado']/resultados[chave]['qtd']))
             
-            #     df_dados_grafico = pd.DataFrame({
-            #         'tipo': retorno,
-            #         'média de dias': valores
-            #     })
+            options = [div for div in divisoes.keys() if div not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]
+            df_time_filtrado = df_time[df_time['Divisão'] == 'Gerente']
+            options1 = df_time_filtrado["KA"].iloc[0]
+            options_1s = options1.split(", ")
+            options2 = df_time_filtrado["KA"].iloc[1]
+            options_2s = options2.split(", ")
 
-            #     tipos = alt.Chart(df_dados_grafico).encode(
-            #         x=alt.X('tipo', axis=alt.Axis(
-            #                     labelFontSize=14,  
-            #                     titleFontSize=16,  
-            #                     labelColor="#000000"    
-            #                 )),
-            #         y=alt.Y('média de dias')
-            #     )
+            df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
+            df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
+            df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+            df_filtrado_tipo = df_filtrado_status2[df_filtrado_status2['Tipo de NOC'] == 'EXTERNA']
+            df_filtrado_aprovacao = df_filtrado_tipo[df_filtrado_tipo["AprovacaoInvestigacao"] == "APROVADA"]
+            
+            nome1 = str(df_time_filtrado['NomeSalesforce'].iloc[0])
+            nome2 = str(df_time_filtrado['NomeSalesforce'].iloc[1])
+            
+            st.subheader(nome1)
+            with st.container(border=True):
+                st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome1, role="gerente"))
+                lista_final = []
+                for opcao in options_1s:
+                    lista_em_maiusculo = [cliente.upper() for cliente in divisoes[opcao]]
+                    lista_final += lista_em_maiusculo
+                df_filtro_ka = df_filtrado_aprovacao[df_filtrado_aprovacao['Clientes'].isin(lista_final)]
+                # st.dataframe(df_filtro_ka) 
 
-            #     chart = tipos.mark_bar() + tipos.mark_text(align='center', baseline='bottom', dy=-2, color="#000000", fontSize=15, fontWeight='bold').encode(text=alt.Text('média de dias') )
+            with st.container(border=True):
+                st.subheader(f"Tempo de resposta - {mes}/{ano}")
+                get_tempo_resposta(df_filtro_ka)
+    
+            with st.container(border=True):
+                st.subheader("Tempo de resposta - YTD")
+                df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+                df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
+                df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
+                df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
+                
+                df_filtro_ka_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Clientes'].isin(lista_final)]
+                st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome1, role="ka"))
+                get_tempo_resposta(df_filtro_ka_ytd)
 
-            #     st.altair_chart(chart.properties(height=450, width=700), use_container_width=False)
+
+            st.subheader(nome2)
+            with st.container(border=True):
+                st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome2, role="gerente"))
+                lista_final = []
+                for opcao in options_2s:
+                    lista_em_maiusculo = [cliente.upper() for cliente in divisoes[opcao]]
+                    lista_final += lista_em_maiusculo
+                df_filtro_ka = df_filtrado_aprovacao[df_filtrado_aprovacao['Clientes'].isin(lista_final)]
+                st.dataframe(df_filtro_ka) 
+            
+            with st.container(border=True):
+                st.subheader(f"Tempo de resposta - {mes}/{ano}")
+                get_tempo_resposta(df_filtro_ka)
+
+            with st.container(border=True):
+                st.subheader("Tempo de resposta - YTD")
+                df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+                df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
+                df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
+                df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
+                
+                df_filtro_ka_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Clientes'].isin(lista_final)]
+                st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome1, role="ka"))
+                get_tempo_resposta(df_filtro_ka_ytd)
+
 
         elif selecao_side_bar == get_text("chat_section_title"):
             st.write("Em breve...")
@@ -776,4 +741,5 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
