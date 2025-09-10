@@ -42,6 +42,7 @@
     "search_relation_label": "Buscar Relación (Haga clic en NOC o en RVT)",
     "noc_option": "NOC",
     "rvt_option": "RVT",
+    "NPS": "NPS",
     "type_noc_number_label": "Digite el número de la NOC en el formato a continuación",
     "noc_placeholder": "12345",
     "noc_has_no_rvt_write": "NOC no tiene RVT relacionada. Datos de la NOC:",
@@ -87,4 +88,5 @@
     "select_country": "Seleccione el país",
     "riscos_melhorias": "Riesgos y Mejoras"
 }
+
 
