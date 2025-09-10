@@ -17,6 +17,7 @@
     "noc_rvt_relation_section_title": "Relação NOC_RVT",
     "search_noc_section_title": "Buscar NOC",
     "search_rvt_section_title": "Buscar RVT",
+    "NPS": "NPS",
     "supervisors_section_title": "Supervisores",
     "analysts_section_title": "Analistas",
     "specialists_section_title": "Especialistas",
@@ -87,4 +88,5 @@
     "select_country": "Selecione o país",
     "riscos_melhorias": "Riscos e Melhorias"
 }
+
 
