@@ -526,7 +526,7 @@ if(login_inicio_c or login_inicio_g):
                         st.dataframe(df_filtro_sup_ytd)
                         get_tempo_resposta(df_filtro_sup_ytd)
             with tab3:  
-                options = [div for div in divisoes.keys() if div != 'planta_ball']
+                options = [div for div in divisoes.keys() if div not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]
                 df_time_filtrado = df_time[df_time['Divisão'] == 'Key Account']
                 selection = st.segmented_control(
                     "Key Accounts", options, selection_mode="single"
@@ -776,3 +776,4 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
