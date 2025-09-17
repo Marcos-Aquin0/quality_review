@@ -554,12 +554,13 @@ def get_tipos_visitas_rvt_semestre(df_rvt, mes, ano):
             col2.metric("Total de Visitas Preventivas", soma['preventiva'], f"{round((soma['preventiva']*100/soma_anteriores['preventiva'])-100,2) if soma_anteriores['preventiva'] else 0}% (anterior: {soma_anteriores['preventiva']})")
             col3.metric("Total de Visitas Corretivas", soma['corretiva'], f"{round((soma['corretiva']*100/soma_anteriores['corretiva'])-100,2) if soma_anteriores['corretiva'] else 0}% (anterior: {soma_anteriores['corretiva']})", "inverse")
             
-def get_rvt_by_person_semestre(df_rvt, mes, ano):
+def get_rvt_by_person(df_rvt, mes, ano, ytd):
     df_time = st.session_state.dados_carregados.get('df_time')
     mes_data = ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
     
     dados_atuais = defaultdict(int)
-    df_filtrado_mes = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano) #por que data início e não data de criação do RVT?
+    if(ytd): df_filtrado_mes = filtrar_por_ytd(df_rvt, 'DataInicio', mes, ano) #por que data início e não data de criação do RVT?
+    else: df_filtrado_mes = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano) #por que data início e não data de criação do RVT?
     indice = 0
     for responsavel in df_filtrado_mes['ResponsavelBall']:
         if responsavel != os.getenv("nome_ignorado1") and responsavel != os.getenv("nome_ignorado2"):
@@ -1345,3 +1346,4 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
+
