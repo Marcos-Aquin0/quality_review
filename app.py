@@ -10,7 +10,7 @@ import json
 
 load_dotenv()
 
-from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person_semestre, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt, get_incidentes_nps
+from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt, get_incidentes_nps
 from service.connections import processar_arquivos_carregados
 
 
@@ -661,7 +661,11 @@ if(login_inicio_c or login_inicio_g):
             ano = periodo[1]
             
             with st.container(border=True):
-                get_rvt_by_person_semestre(df_rvt, mes, ano)
+                get_rvt_by_person(df_rvt, mes, ano, 0)
+            
+            with st.container(border=True):
+                st.subheader("YTD")
+                get_rvt_by_person(df_rvt, mes, ano, 1)
             
             options = [div for div in divisoes.keys() if div not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]
             df_time_filtrado = df_time[df_time['Divisão'] == 'Gerente']
@@ -741,5 +745,6 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
 
