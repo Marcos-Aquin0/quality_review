@@ -2,7 +2,6 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 from streamlit_option_menu import option_menu
-from st_click_detector import click_detector
 from dotenv import load_dotenv
 import os
 import json
@@ -10,7 +9,7 @@ import json
 
 load_dotenv()
 
-from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, get_mapa, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt, get_incidentes_nps
+from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt, get_incidentes_nps, get_qtd_latas_tampas, get_qtd_parecer, get_qtd_tratativa, get_qtd_defeitos, get_qtd_incidentes_planta, get_qtd_clientes, get_qtd_ressarce
 from service.connections import processar_arquivos_carregados
 
 
@@ -42,8 +41,8 @@ else:
     login_inicio_g = 0
     login_inicio_c = 0
     st.set_page_config(
-        page_title="Quality Review",
-        page_icon="📚", 
+        page_title="CTS Review",
+        page_icon="🤝", 
         layout='centered'
     )
     st.title(get_text("login_title"))
@@ -135,34 +134,21 @@ if(login_inicio_c or login_inicio_g):
                     get_text("rvt_time"),
                     get_text("response_time"),
                     get_text("riscos_melhorias"),
-                    get_text("NPS"),
-                    
-                    get_text("where_weve_been_section_title"),  
-                    get_text("cts_managers_section_title"), 
-                    get_text("chat_section_title")
+                    get_text("NPS"),  
+                    get_text("cts_managers_section_title")
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_g, 
-                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'person', 'map', 'eye', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'person', 'eye'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
         
         elif (login_inicio_c):
             with st.sidebar:
                 menu_options_c = [
-                    get_text("salesforce_section_title"), 
-                    get_text("ressarceball_section_title"), 
-                    get_text("noc_rvt_relation_section_title"), 
-                    get_text("search_noc_section_title"), 
-                    get_text("search_rvt_section_title"),
-                    get_text("rvt_time"),
                     get_text("response_time"),
-                    get_text("riscos_melhorias"), 
-                    get_text("NPS"),
-                    
-                    get_text("where_weve_been_section_title"), 
-                    get_text("chat_section_title")
+                    get_text("rvt_time"),
                 ]
                 selecao_side_bar = option_menu(get_text("sidebar_menu_title"), menu_options_c, 
-                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'person', 'map', 'chat'], menu_icon="cast", default_index=0,
+                    icons=['cloud', 'coin', 'search', 'search', 'search', 'clock', 'clock', 'hammer', 'person', 'person'], menu_icon="cast", default_index=0,
                     styles={"nav-link-selected": {"background-color": "#093DC1"}})
                 
         if selecao_side_bar == get_text("salesforce_section_title"):
@@ -482,49 +468,98 @@ if(login_inicio_c or login_inicio_g):
                 selection = st.segmented_control(
                     "Especialistas", options, selection_mode='single'
                 )
-
+            
                 df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
                 df_filtrado_status = df_filtrado[df_filtrado['Status']!= 'CANCELADA']
                 df_filtrado_status2 = df_filtrado_status[df_filtrado_status['Status']!='PREENCHIMENTO DE DADOS DA NOC']
                 df_filtrado_tipo = df_filtrado_status2[df_filtrado_status2['Tipo de NOC'] == 'EXTERNA']
                 df_filtrado_aprovacao = df_filtrado_tipo[df_filtrado_tipo["AprovacaoInvestigacao"] == "APROVADA"]
                 
-                if(selection):
-                    df_selecao = df_time_filtrado[df_time_filtrado['RegiãoEspecialista'] == selection]
-                    filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
-                    nome = str(df_selecao['NomeSalesforce'].iloc[0])
-                    imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
-                    imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
+                if selection:
+                    if(selection == 'ConeSul'):
+                        df_selecao = df_time_filtrado[df_time_filtrado['RegiãoEspecialista'] == selection]
+                        filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
+                        nome = str(df_selecao['NomeSalesforce'].iloc[0])
+                        imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
+                        imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
 
-                    with st.container(border=True):
-                        col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
-                        with col1:
-                            
-                            cl1,cl2,cl3 = st.columns([1,3,1])
-                            with cl2:
-                                st.image(imagem1, nome)
-                            
-                            st.image(imagem2)
-                        with col2:
-                            st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
-                            df_filtro_sup = df_filtrado_aprovacao[df_filtrado_aprovacao['Supervisores'] == filtro_sup] 
-                            st.dataframe(df_filtro_sup)
+                        with st.container(border=True):
+                            col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
+                            with col1:
+                                
+                                cl1,cl2,cl3 = st.columns([1,3,1])
+                                with cl2:
+                                    st.image(imagem1, nome)
+                                
+                                st.image(imagem2)
+                            with col2:
+                                st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
+                                df_filtro_sup = df_filtrado_aprovacao[df_filtrado_aprovacao['Supervisores'] == filtro_sup] 
+                                st.dataframe(df_filtro_sup)
 
-                    with st.container(border=True):
-                        st.subheader(get_text("response_time_subheader", mes=mes, ano=ano))
-                        get_tempo_resposta(df_filtro_sup)
+                        with st.container(border=True):
+                            st.subheader(get_text("response_time_subheader", mes=mes, ano=ano))
+                            get_tempo_resposta(df_filtro_sup)
 
-                    with st.container(border=True):
-                        st.subheader(get_text("ytd_response_time_subheader"))
-                        df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
-                        df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
-                        df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
-                        df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
-                        df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
-                        df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
-                        st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
-                        st.dataframe(df_filtro_sup_ytd)
-                        get_tempo_resposta(df_filtro_sup_ytd)
+                        with st.container(border=True):
+                            st.subheader(get_text("ytd_response_time_subheader"))
+                            df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+                            df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
+                            df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                            df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
+                            df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
+                            df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Supervisores'] == filtro_sup]
+                            st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
+                            st.dataframe(df_filtro_sup_ytd)
+                            get_tempo_resposta(df_filtro_sup_ytd)
+
+
+                    else:
+                        df_selecao = df_time_filtrado[df_time_filtrado['RegiãoEspecialista'] == selection]
+                        filtro_sup = str(df_selecao['FiltroSalesforce'].iloc[0])
+                        nome = str(df_selecao['NomeSalesforce'].iloc[0])
+                        imagem1 = str(df_selecao['ImagemPessoaDB'].iloc[0])
+                        imagem2 = str(df_selecao['ImagemRegiaoDB'].iloc[0])
+
+                        with st.container(border=True):
+                            col1, col2 = st.columns([0.2, 0.8], vertical_alignment="center")
+                            with col1:
+                                
+                                cl1,cl2,cl3 = st.columns([1,3,1])
+                                with cl2:
+                                    st.image(imagem1, nome)
+                                
+                                st.image(imagem2)
+                            with col2:
+                                st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="especialista"))
+                                                      
+
+                        with st.container(border=True):
+                            st.subheader(get_text("ytd_response_time_subheader"))
+                            df_filtrado_ytd = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+                            df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
+                            df_filtrado_status2_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Status']!='PREENCHIMENTO DE DADOS DA NOC']
+                            df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
+                            df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
+                            df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Especialistas'] == filtro_sup]
+                            st.dataframe(df_filtro_sup_ytd, hide_index=True, column_order=['Numero NOC', 'DataRecebimentoSAC', 'Status', 'Parecer', 'CodigoCLiente', 'Clientes', 'Termo_pesquisa', 'Planta','AprovacaoInvestigacao', 'DataAprovacao', 'Defeito', 'Codigo do Produto', 'Rotulo do Produto', 'Lote'])
+                            get_tempo_resposta(df_filtro_sup_ytd)
+
+                        with st.container(border=True):
+                            st.header("NOCS AGUARDANDO APROVAÇÃO")
+                            df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']!= 'CANCELADA']
+                            df_filtrado_tipo_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Tipo de NOC'] == 'EXTERNA']
+                            df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "NÃO INICIADA"]
+                            df_filtro_sup_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Especialistas'] == filtro_sup]
+                            st.dataframe(df_filtro_sup_ytd,  hide_index=True, column_order=['Numero NOC', 'DataRecebimentoSAC', 'Status', 'Parecer', 'CodigoCLiente', 'Clientes', 'Termo_pesquisa', 'Planta','AprovacaoInvestigacao', 'DataAprovacao', 'Defeito', 'Codigo do Produto', 'Rotulo do Produto', 'Lote'])
+                        
+                        with st.container(border=True):
+                            st.header("NOCS CANCELADAS")
+                            df_filtrado_status_ytd = df_filtrado_ytd[df_filtrado_ytd['Status']== 'CANCELADA']
+                            df_filtro_sup_ytd = df_filtrado_status_ytd[df_filtrado_status_ytd['Especialistas'] == filtro_sup]
+                            st.dataframe(df_filtro_sup_ytd,  hide_index=True, column_order=['Numero NOC', 'DataRecebimentoSAC', 'Status', 'Parecer', 'CodigoCLiente', 'Clientes', 'Termo_pesquisa', 'Planta','AprovacaoInvestigacao', 'DataAprovacao', 'Defeito', 'Codigo do Produto', 'Rotulo do Produto', 'Lote'])
+                        
+
             with tab3:  
                 options = [div for div in divisoes.keys() if div not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]
                 df_time_filtrado = df_time[df_time['Divisão'] == 'Key Account']
@@ -559,6 +594,8 @@ if(login_inicio_c or login_inicio_g):
                         #por cliente
                         lista_em_maiusculo = [cliente.upper() for cliente in divisoes[selection]]
                         df_filtro_ka = df_filtrado_aprovacao[df_filtrado_aprovacao['Clientes'].isin(lista_em_maiusculo)]
+                        # df_filtro_kaa = df_filtrado[df_filtrado['Clientes'].isin(lista_em_maiusculo)]
+                        # st.dataframe(df_filtro_kaa)
                         st.dataframe(df_filtro_ka.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])
                         with col2:
                             st.info(get_text("month_info_text", mes=mes, ano=ano, nome=nome, role="ka"))
@@ -595,64 +632,110 @@ if(login_inicio_c or login_inicio_g):
 
         elif selecao_side_bar == get_text("NPS"):
             
-            st.subheader("Perfil por Key Account")
+            st.info("Esta página permite avaliar o NPS, dados sobre a quantidade de reclamações de latas e tampas, parecer, tratativa e a relação entre clientes e defeitos/plantas")
+            
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
 
-            #selecionar ka
+            options_ka = [coluna for coluna in divisoes.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]
+            options_ka.append("todos")
+           
+            plantas = set(list(df_noc['Planta'].fillna("-")))
+            plantas.remove("-")
+            plantas.remove('COMEX CORP EC')
+            # plantas.remove('LOGÍSTICA CORP EC')
+            plantas.remove('SANTA CRUZ')
+            
+            on = st.toggle("KA ou Planta")
+            if on:
+                planta = st.multiselect("selecione uma planta ou mais", options=plantas, placeholder="plantas")
+                ka = "todos"
+            else: 
+                ka = st.selectbox("selecione um key account", options=options_ka)
+                planta = ""
 
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                with st.container(border=True):
+                with st.container(border=True,height=340):
                     st.write("Incidentes YTD")
-                    get_incidentes_nps(df_noc, mes, ano)
+                    get_incidentes_nps(df_noc, mes, ano, ka, planta)
+        
             with col2:
                 with st.container(border=True):
                     st.write("Latas e Tampas")
+                    get_qtd_latas_tampas(df_noc, mes, ano, ka, planta)
             with col3:
                 with st.container(border=True):
                     st.write("Parecer")
+                    get_qtd_parecer(df_noc, mes, ano, ka, planta)
             with col4:
                 with st.container(border=True):
                     st.write("Tratativa Final")
+                    get_qtd_tratativa(df_noc, mes, ano, ka, planta)
             
             #devolucao ressarcimento e cartas de credito para latas e tampas
+            c1, c2 = st.columns(2)
+            vet_ressarce = get_qtd_ressarce(df_r_brasil, df_d_brasil, mes, ano, ka)
+            with c1:
+                with st.container(border=True, height=270):
+                    st.subheader("LATAS")
+                    colu1, colu2 = st.columns([1,2])
+                    with colu1:
+                        st.image(r"data\Picture1.png",width=230)
+                    with colu2:
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.markdown("<h1 style='text-align: center; color: black;'> 🚚 </h1>", unsafe_allow_html=True)
+                            st.markdown(f"<h2 style='text-align: center; color: black;'> {vet_ressarce[0]} </h2>", unsafe_allow_html=True)
+                        with col2:
+                            st.markdown("<h1 style='text-align: center; color: black;'> 💵 </h1>", unsafe_allow_html=True)
+                            st.markdown(f"<h2 style='text-align: center; color: black;'> {vet_ressarce[1]} </h2>", unsafe_allow_html=True)
+                        with col3:
+                            st.markdown("<h1 style='text-align: center; color: black;'>💲</h1>", unsafe_allow_html=True)
+                            st.markdown(f"<h2 style='text-align: center; color: black;'> ${vet_ressarce[2]:,.2f} </h2>", unsafe_allow_html=True)
+            with c2:
+                with st.container(border=True, height=270):
+                    st.subheader("TAMPAS")
+                    colu1, colu2 = st.columns([1,2])
+                    with colu1:
+                        st.image(r"data\image.png",width=80)
+                        st.image(r"data\Picture2.png",width=255)
+                    with colu2:
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.markdown("<h1 style='text-align: center; color: black;'> 🚚 </h1>", unsafe_allow_html=True)
+                            st.markdown(f"<h2 style='text-align: center; color: black;'> {vet_ressarce[3]} </h2>", unsafe_allow_html=True)
+                        with col2:
+                            st.markdown("<h1 style='text-align: center; color: black;'> 💵 </h1>", unsafe_allow_html=True)
+                            st.markdown(f"<h2 style='text-align: center; color: black;'> {vet_ressarce[4]} </h2>", unsafe_allow_html=True)
+                        with col3:
+                            st.markdown("<h1 style='text-align: center; color: black;'>💲</h1>", unsafe_allow_html=True)
+                            st.markdown(f"<h2 style='text-align: center; color: black;'> ${vet_ressarce[5]:,.2f} </h2>", unsafe_allow_html=True)
 
-            cl1, cl2, cl3 = st.columns(3)
+            parecer = st.selectbox("Parecer", options=["em análise, procedente, não procedente e procedente alerta", "em análise", "procedente", "não procedente", "procedente alerta"])
+            cl1, cl2, cl3 = st.columns([1,1,1])
             with cl1:
-                with st.container(border=True):
-                    st.write("TOP 10 Defeitos")
+                with st.container(border=True, height=435):
+                    st.write(f"TOP 5 Defeitos")
+                    get_qtd_defeitos(df_noc, mes, ano, ka, parecer, planta)
             with cl2:
-                with st.container(border=True):
-                    st.write("Incidentes por Fabricante")
+                with st.container(border=True, height=435):
+                    st.write("Incidentes por Planta")
+                    get_qtd_incidentes_planta(df_noc, mes, ano, ka, planta)
             with cl3:
-                with st.container(border=True):
-                    st.write("Número de Incidentes Abertos por Planta")
-    
-        elif selecao_side_bar == get_text("where_weve_been_section_title"):
+                with st.container(border=True, height=435):
+                        st.write("Incidentes por Cliente")
+                        get_qtd_clientes(df_noc, mes, ano, ka, planta)
             
-            st.info(get_text("where_weve_been_info"))
 
-            for linha in df_rvt["CidadeCliente"]:
-                if pd.isna(linha):
-                    continue
-                if linha not in divisoes_pesquisa:
-                    divisoes_pesquisa[linha] = 0
-                divisoes_pesquisa[linha]+= 1
-
-            # if 'geocoded_df' not in st.session_state:
-            #     st.session_state.geocoded_df = pd.DataFrame(columns=["City", "Complaints", "lat", "lon", "Full Address"])
-
-            # if 'ambiguous_city' not in st.session_state:
-            #     st.session_state.ambiguous_city = None
-
-            # if 'processed_cities' not in st.session_state:
-            #     st.session_state.processed_cities = []
-                
-            # get_mapa(divisoes_pesquisa)
-            visitas = str(os.getenv("visitas"))
-            st.image(visitas)
+            with st.container(border=True, height=520):
+                    st.write("Incidentes por Envasador")
+            
+            with st.container(border=True, height=520):
+                    st.write("Procedentes x RVT (tudo ou corretiva?)")
 
         elif selecao_side_bar == get_text("cts_managers_section_title"):
             
@@ -666,7 +749,8 @@ if(login_inicio_c or login_inicio_g):
             with st.container(border=True):
                 st.subheader("YTD")
                 get_rvt_by_person(df_rvt, mes, ano, 1)
-            
+
+
             options = [div for div in divisoes.keys() if div not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]
             df_time_filtrado = df_time[df_time['Divisão'] == 'Gerente']
             options1 = df_time_filtrado["KA"].iloc[0]
@@ -736,15 +820,5 @@ if(login_inicio_c or login_inicio_g):
                 st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome1, role="ka"))
                 get_tempo_resposta(df_filtro_ka_ytd)
 
-
-        elif selecao_side_bar == get_text("chat_section_title"):
-            st.write("Em breve...")
-            # latinha = str(os.getenv("latinha"))
-            # st.image(image=latinha)
-            
-
     else:
         st.warning(get_text("upload_warning"))
-
-
-
