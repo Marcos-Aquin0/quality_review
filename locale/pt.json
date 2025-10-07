@@ -2,13 +2,13 @@
     "password_label": "Password",
     "enter_button": "Enter",
     "wrong_password_error": "😕 Senha incorreta",
-    "page_title": "Quality Review",
-    "login_title": "Login QR Mensal",
-    "login_warning": "Por favor, insira a senha para acessar o app do Quality Review.",
-    "main_title": "QUALITY REVIEW MENSAL",
-    "app_intro": "Este é o app de relatório do Quality Review!",
+    "page_title": "CTS Review",
+    "login_title": "Login CTS",
+    "login_warning": "Por favor, insira a senha para acessar o app do CTS Review.",
+    "main_title": "CTS REVIEW",
+    "app_intro": "Este é o app de relatório do CTS Review!",
     "file_uploader_header": "1. Carregar Arquivos",
-    "file_uploader_label": "Navegue até a pasta \\16 - SERVIÇO AO CLIENTE\\32. Conexões, e selecione todos os arquivos",
+    "file_uploader_label": "Navegue até a pasta \\16 - SERVIÇO AO CLIENTE\\08. SVC - Gestão\\13. Estagiários\\Conexões, e selecione todos os arquivos",
     "file_upload_success": "Arquivos carregados e processados com sucesso!",
     "sidebar_menu_title": "Menu",
     "sidebar_reload_info": "Para recarregar a página basta clicar R",
@@ -62,7 +62,7 @@
     "response_time": "Tempo de resposta",
     "rvt_time": "Tempo de 1º Contato",
     "response_time_subheader": "Tempo de resposta - {mes}/{ano}",
-    "ytd_response_time_subheader": "Tempo de resposta - YTD",
+    "ytd_response_time_subheader": "TEMPO DE RESPOSTA - YTD",
     "ytd_info_text": "Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas a partir do mês 1/{ano} até o mês {mes}/{ano} selecionado para o {role} {nome}",
     "where_weve_been_info": "Visualize em um mapa interativo todas as cidades já visitadas através das RVTs desde 2023",
     "where_weve_been_write": "Em breve...",
@@ -88,5 +88,3 @@
     "select_country": "Selecione o país",
     "riscos_melhorias": "Riscos e Melhorias"
 }
-
-
