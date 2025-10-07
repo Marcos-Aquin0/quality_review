@@ -7,8 +7,7 @@ import unidecode
 import altair as alt
 import io
 import plotly.express as px
-from geopy.geocoders import Nominatim
-from geopy.extra.rate_limiter import RateLimiter
+import plotly.graph_objects as go
 import os
 import time
 import string
@@ -834,6 +833,8 @@ def get_tempo_resposta(df_filtro):
     st.info(get_text("ressarceball_time_info"))
     st.dataframe(df_nocs_tempo_resposta, hide_index=True)
 
+    
+
     tempos = pd.to_numeric(df_nocs_tempo_resposta['Tempo de Resposta (dias)'], errors='coerce')
     media_dias = round(tempos.mean(), 1)
 
@@ -896,49 +897,528 @@ def get_tempo_rvt(df_filtro):
         media_dias = round(tempos.mean(), 1)
         st.metric("Média de Tempo de 1º Contato RVT Corretivo", media_dias)
 
-def get_incidentes_nps(df_noc, mes, ano):
+def get_incidentes_nps(df_noc, mes, ano, ka, planta):
     divisoes = st.session_state.dados_carregados.get('divisoes')
     df_cop = st.session_state.dados_carregados.get('df_cop')
     incidentes_anteriores = {}
     popnoc = {}
     allnocs = []
-    for mes_anteriores in range(1, mes+1):
-        df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes_anteriores, ano)
-        indice = 0
-        ignorar = []
-        for div in divisoes.keys():
-            if(div not in incidentes_anteriores):
-                incidentes_anteriores[div] = {}
-                popnoc[div] = []
-            if(dict_meses[mes_anteriores] not in incidentes_anteriores[div]):
-                incidentes_anteriores[div][dict_meses[mes_anteriores]] = 0
-        for cliente in df_filtrado['Clientes']:
-            
-            if str(cliente).lower() in df_cop['copacker']:
-                for divisao in df_cop.keys():
-                    
-                    for rotulo in df_cop[divisao]:
-                        if rotulo.upper() in df_filtrado["Rotulo do Produto"].iloc[indice]:
-
-                            div = divisao
-                            ignorar.append(cliente)
-                            popnoc[div].append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
-                            allnocs.append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
-                            break
+    if ka != 'todos':
+        for mes_anteriores in range(1, mes+1):
+            df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes_anteriores, ano)
+            indice = 0
+            ignorar = []
+            for div in divisoes.keys():
+                if(div not in incidentes_anteriores):
+                    incidentes_anteriores[div] = {}
+                    popnoc[div] = []
+                if(dict_meses[mes_anteriores] not in incidentes_anteriores[div]):
+                    incidentes_anteriores[div][dict_meses[mes_anteriores]] = 0
+            for cliente in df_filtrado['Clientes']:
                 
-            if(cliente not in ignorar):
-                div = categorizar_divisao(cliente)
-            if(df_filtrado['Status'].iloc[indice] != 'CANCELADA' and (pd.isna(cliente) == 0) and div != "outros"):
-                incidentes_anteriores[div][dict_meses[mes_anteriores]] += 1
-            indice += 1
+                if str(cliente).lower() in df_cop['copacker']:
+                    for divisao in df_cop.keys():
+                        
+                        for rotulo in df_cop[divisao]:
+                            if rotulo.upper() in df_filtrado["Rotulo do Produto"].iloc[indice]:
 
+                                div = divisao
+                                ignorar.append(cliente)
+                                popnoc[div].append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
+                                allnocs.append(df_filtrado["Numero NOC"].iloc[indice].astype(int))
+                                break
+                    
+                if(cliente not in ignorar):
+                    div = categorizar_divisao(cliente)
+                if(df_filtrado['Status'].iloc[indice] != 'CANCELADA' and (pd.isna(cliente) == 0) and div != "outros"):
+                    incidentes_anteriores[div][dict_meses[mes_anteriores]] += 1
+                indice += 1
+        source = incidentes_anteriores[ka]
+        df_source = pd.DataFrame(list(source.items()), columns=['Mês', 'Incidentes'])
+        display_gauge(df_source["Incidentes"].sum(), "YTD", "blue")
+ 
+    if planta:
+        df_filtrado = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+        df_filtro_canc = df_filtrado[df_filtrado['Status'] != 'CANCELADA']
+        df_filtrado_planta = df_filtro_canc[df_filtro_canc['Planta'].isin(planta)]
+        
+        df_filtro_parecer = df_filtrado_planta[df_filtrado_planta['Parecer'].isin(['PROCEDENTE', 'PROCEDENTE ALERTA'])]
+        col1, col2, col3 = st.columns([1,1,0.2])
+        with col1:
+            display_gauge(len(df_filtrado_planta['Planta']), 'YTD', 'blue')
+        with col2:
+            display_gauge(len(df_filtro_parecer['Planta']), 'YTD\nProcedente', 'blue')
+
+def get_qtd_latas_tampas(df_noc, mes, ano, ka, planta):
+    divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
     
-    ka = st.selectbox("selecione um key account", options=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']])
-      
-    source = incidentes_anteriores[ka]
-    df_source = pd.DataFrame(list(source.items()), columns=['Mês', 'Incidentes'])
+    df_filtrado = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+    df_filtrado_n = df_filtrado[df_filtrado['Status'] != 'CANCELADA']
+    dados_latas = {'latas':0, 'tampas':0}
 
-    st.metric("",df_source["Incidentes"].sum())
+    if ka != 'todos':
+        clientes_permitidos1 = [str(cliente).lower() for cliente in divisoes[ka]]
+        clientes_permitidos = [str(cliente).lower() for cliente in clientes_permitidos1 if cliente not in df_cop['copacker']]
+        mascara_filtragem = df_filtrado_n['Clientes'].str.lower().isin(clientes_permitidos)
+        df_filtrado_cliente = df_filtrado_n[mascara_filtragem]        
+        for tipo in df_filtrado_cliente['Tipo do Produto']:
+            if tipo == 'LATAS':
+                dados_latas['latas'] += 1
+            else: dados_latas['tampas'] += 1
+
+        df_filtrado_n["Rotulo do Produto"] = df_filtrado_n["Rotulo do Produto"].fillna('-')
+        for rotulo in df_cop[ka]:
+            df_cop_filtro = df_filtrado_n[df_filtrado_n["Rotulo do Produto"].str.contains(rotulo.upper())]
+            df_cop_filtro2 = df_cop_filtro[df_cop_filtro['Clientes'].fillna('').str.lower().isin(df_cop['copacker'])]
+        
+            for tipo in df_cop_filtro2['Tipo do Produto']:
+                if tipo == 'LATAS':
+                    dados_latas['latas'] += 1
+                else: dados_latas['tampas'] += 1
+
+    if planta:
+        df_filtrado_planta = df_filtrado_n[df_filtrado_n['Planta'].isin(planta)]
+        for tipo in df_filtrado_planta['Tipo do Produto']:
+            if tipo == 'LATAS':
+                dados_latas['latas'] += 1
+            else: dados_latas['tampas'] += 1
+
+    source = dados_latas
+    df_source = pd.DataFrame(list(source.items()), columns=['Tipo do Produto', 'Quantidade'])
+
+    df_source['Quantidade'] = df_source['Quantidade'].fillna(0)
+
+    base_display = alt.Chart(df_source).encode(
+        x=alt.X('Quantidade', title='Quantidade', scale=alt.Scale(nice=True)),
+        y=alt.Y('Tipo do Produto', axis=alt.Axis(
+            labelFontSize=14,
+            titleFontSize=16,
+            labelColor="#000000", 
+            titleColor="#000000"  
+        )),
+        color=alt.Color('Tipo do Produto',
+                  scale=alt.Scale(range=['blue','blue','blueviolet','cadetblue']), # Define sua paleta de cores aqui
+                  legend=None # Opcional: remove a legenda de cores se for redundante
+                 ),
+        text='Quantidade'
+    ).properties(
+        width=290,
+        height=260
+    )
+    
+    chart_display = base_display.mark_bar() + base_display.mark_text(align='left', dx=3, color='#000000', fontSize=14)
+    st.altair_chart(chart_display.configure(background='#ffffff00'), use_container_width=True)
+    
+def get_qtd_parecer(df_noc, mes, ano, ka, planta):
+    divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
+    
+    df_filtrado = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+    df_filtrado_n = df_filtrado[df_filtrado['Status'] != 'CANCELADA']
+    dados_parecer = {"procedente":0, "procedente alerta":0, "não procedente":0, "em análise":0}
+    if ka != 'todos':
+        clientes_permitidos1 = [str(cliente).lower() for cliente in divisoes[ka]]
+        clientes_permitidos = [str(cliente).lower() for cliente in clientes_permitidos1 if cliente not in df_cop['copacker']]
+        mascara_filtragem = df_filtrado_n['Clientes'].str.lower().isin(clientes_permitidos)
+        df_filtrado_cliente = df_filtrado_n[mascara_filtragem]        
+        for tipo in df_filtrado_cliente['Parecer']:
+            if tipo == 'PROCEDENTE':
+                dados_parecer['procedente'] += 1
+            elif tipo == 'NÃO PROCEDENTE':
+                dados_parecer['não procedente'] += 1
+            elif tipo == "PROCEDENTE ALERTA":
+                dados_parecer['procedente alerta'] += 1 
+            else: dados_parecer['em análise'] += 1
+
+        df_filtrado_n["Rotulo do Produto"] = df_filtrado_n["Rotulo do Produto"].fillna('-')
+        for rotulo in df_cop[ka]:
+            df_cop_filtro = df_filtrado_n[df_filtrado_n["Rotulo do Produto"].str.contains(rotulo.upper())]
+            df_cop_filtro2 = df_cop_filtro[df_cop_filtro['Clientes'].str.lower().isin(df_cop['copacker'])]
+            
+            for tipo in df_cop_filtro2['Parecer']:
+                if tipo == 'PROCEDENTE':
+                    dados_parecer['procedente'] += 1
+                elif tipo == 'NÃO PROCEDENTE':
+                    dados_parecer['não procedente'] += 1
+                elif tipo == "PROCEDENTE ALERTA":
+                    dados_parecer['procedente alerta'] += 1 
+                else: dados_parecer['em análise'] += 1
+
+    if planta:
+        df_filtrado_planta = df_filtrado_n[df_filtrado_n['Planta'].isin(planta)]
+        for tipo in df_filtrado_planta['Parecer']:
+                if tipo == 'PROCEDENTE':
+                    dados_parecer['procedente'] += 1
+                elif tipo == 'NÃO PROCEDENTE':
+                    dados_parecer['não procedente'] += 1
+                elif tipo == "PROCEDENTE ALERTA":
+                    dados_parecer['procedente alerta'] += 1 
+                else: dados_parecer['em análise'] += 1
+
+    source = dados_parecer
+    df_source = pd.DataFrame(list(source.items()), columns=['Parecer', 'Quantidade'])
+
+    df_source['Quantidade'] = df_source['Quantidade'].fillna(0)
+    
+    base_display = alt.Chart(df_source).encode(
+        x=alt.X('Quantidade', title='Quantidade', scale=alt.Scale(nice=True)),
+        y=alt.Y('Parecer', axis=alt.Axis(
+            labelLimit=200,
+            labelFontSize=14,
+            titleFontSize=16,
+            labelColor="#000000", 
+            titleColor="#000000"  
+        )),
+        color=alt.Color('Parecer',
+                  scale=alt.Scale(range=["#949494","blue","#FF0000","#E42108"]), # Define sua paleta de cores aqui
+                  legend=None # Opcional: remove a legenda de cores se for redundante
+                 ),
+                 
+    text='Quantidade'
+    ).properties(
+        width=290,
+        height=260
+    )
+    
+    chart_display = base_display.mark_bar() + base_display.mark_text(align='left', dx=3, color='#000000', fontSize=14)
+    st.altair_chart(chart_display.configure(background='#ffffff00'), use_container_width=True)
+
+def get_qtd_tratativa(df_noc, mes, ano, ka, planta):
+    divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
+    
+    df_filtrado = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+    df_filtrado_n = df_filtrado[df_filtrado['Status'] != 'CANCELADA']
+    dados_tratativa = {"concluída":0, "em tratativa":0}
+    if ka!= 'todos':
+        clientes_permitidos1 = [str(cliente).lower() for cliente in divisoes[ka]]
+        clientes_permitidos = [str(cliente).lower() for cliente in clientes_permitidos1 if cliente not in df_cop['copacker']]
+        mascara_filtragem = df_filtrado_n['Clientes'].str.lower().isin(clientes_permitidos)
+        df_filtrado_cliente = df_filtrado_n[mascara_filtragem]        
+        
+        for tipo in df_filtrado_cliente['Status']:
+            if tipo == 'CONCLUÍDA':
+                dados_tratativa['concluída'] += 1
+            else: dados_tratativa['em tratativa'] += 1
+
+        df_filtrado_n["Rotulo do Produto"] = df_filtrado_n["Rotulo do Produto"].fillna('-')
+        for rotulo in df_cop[ka]:
+            df_cop_filtro = df_filtrado_n[df_filtrado_n["Rotulo do Produto"].str.contains(rotulo.upper())]
+            df_cop_filtro2 = df_cop_filtro[df_cop_filtro['Clientes'].str.lower().isin(df_cop['copacker'])]
+            
+            for tipo in df_cop_filtro2['Status']:
+                if tipo == 'CONCLUÍDA':
+                    dados_tratativa['concluída'] += 1
+                else: dados_tratativa['em tratativa'] += 1
+    if planta:
+        df_filtrado_planta = df_filtrado_n[df_filtrado_n['Planta'].isin(planta)]
+        for tipo in df_filtrado_planta['Status']:
+                if tipo == 'CONCLUÍDA':
+                    dados_tratativa['concluída'] += 1
+                else: dados_tratativa['em tratativa'] += 1
+
+    source = dados_tratativa
+    df_source = pd.DataFrame(list(source.items()), columns=['Tratativa', 'Quantidade'])
+
+    df_source['Quantidade'] = df_source['Quantidade'].fillna(0)
+    
+    base_display = alt.Chart(df_source).encode(
+        x=alt.X('Quantidade', title='Quantidade', scale=alt.Scale(nice=True)),
+        y=alt.Y('Tratativa', axis=alt.Axis(
+            labelLimit=200,
+            labelFontSize=14,
+            titleFontSize=16,
+            labelColor="#000000", 
+            titleColor="#000000"  
+        )),
+        color=alt.Color('Tratativa',
+                  scale=alt.Scale(range=['blue',"#8B8B8B",'blueviolet','cadetblue']), # Define sua paleta de cores aqui
+                  legend=None # Opcional: remove a legenda de cores se for redundante
+                 ),
+                 
+    text='Quantidade'
+    ).properties(
+        width=290,
+        height=260
+    )
+    
+    chart_display = base_display.mark_bar() + base_display.mark_text(align='left', dx=3, color='#000000', fontSize=14)
+    st.altair_chart(chart_display.configure(background='#ffffff00'), use_container_width=True)
+
+def get_qtd_defeitos(df_noc, mes, ano, ka, parecer, planta):
+    divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
+    
+    df_filtrado = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+    dados_defeito = {}
+    if(parecer=="em análise, procedente, não procedente e procedente alerta"):
+        df_filtrado_parecer = df_filtrado
+    elif(parecer=="em análise"):
+        df_filtrado_parecer = df_filtrado[~df_filtrado['Parecer'].isin(["NÃO PROCEDENTE", "PROCEDENTE", "PROCEDENTE ALERTA"])]
+    else: df_filtrado_parecer = df_filtrado[df_filtrado['Parecer']==parecer.upper()]
+    df_filtrado_n = df_filtrado_parecer[df_filtrado_parecer['Status'] != 'CANCELADA']
+    if ka!= 'todos':
+        clientes_permitidos1 = [str(cliente).lower() for cliente in divisoes[ka]]
+        clientes_permitidos = [str(cliente).lower() for cliente in clientes_permitidos1 if cliente not in df_cop['copacker']]
+        mascara_filtragem = df_filtrado_n['Clientes'].str.lower().isin(clientes_permitidos)
+        df_filtrado_cliente = df_filtrado_n[mascara_filtragem]        
+        
+        for tipo in df_filtrado_cliente['Defeito']:
+            if tipo not in dados_defeito:
+                dados_defeito[tipo] = 0 
+            dados_defeito[tipo] += 1
+
+        df_filtrado_n["Rotulo do Produto"] = df_filtrado_n["Rotulo do Produto"].fillna('-')
+        for rotulo in df_cop[ka]:
+            df_cop_filtro = df_filtrado_n[df_filtrado_n["Rotulo do Produto"].str.contains(rotulo.upper())]
+            df_cop_filtro2 = df_cop_filtro[df_cop_filtro['Clientes'].str.lower().isin(df_cop['copacker'])]
+            
+            for tipo in df_cop_filtro2['Defeito']:
+                if tipo not in dados_defeito:
+                    dados_defeito[tipo] = 0 
+                dados_defeito[tipo] += 1
+
+    if planta:
+        df_filtrado_planta = df_filtrado_n[df_filtrado_n['Planta'].isin(planta)]
+        for tipo in df_filtrado_planta['Defeito']:
+                if tipo not in dados_defeito:
+                    dados_defeito[tipo] = 0 
+                dados_defeito[tipo] += 1
+
+    # dados_defeito[tipo] = {"procedente":0, "procedente alerta":0, "não procedente":0, "em análise":0}
+                
+    #             if df_filtrado_planta['Parecer'].mesmalinha in ["NÃO PROCEDENTE", "PROCEDENTE", "PROCEDENTE ALERTA"]:
+    #                 dados_defeito[tipo][df_filtrado_planta['Parecer'].lower()] += 1
+    #             else:
+    #                 dados_defeito[tipo]["em análise"] += 1
+    itens_ordenados = sorted(dados_defeito.items(), key=lambda item: item[1], reverse=True)
+    top_10_itens = itens_ordenados[:5] #10
+    source = dict(top_10_itens)
+    df_source = pd.DataFrame(list(source.items()), columns=['Defeito', 'Quantidade'])
+
+    df_source['Quantidade'] = df_source['Quantidade'].fillna(0)
+    
+    base_display = alt.Chart(df_source).encode(
+        x=alt.X('Quantidade', title='Quantidade', scale=alt.Scale(nice=True)),
+        y=alt.Y('Defeito:N', axis=alt.Axis(
+            labelLimit=600,
+            labelFontSize=14,
+            titleFontSize=16,
+            labelColor="#000000", 
+            titleColor="#000000",    
+            titleAngle=0,       # 1. Deixa o título na horizontal
+            titleAlign='left',  # 2. Alinha o texto à esquerda
+            titleAnchor='start',# 3. Define o ponto de "âncora" do texto no início
+            titleY=-20,         # 4. Move o título para CIMA (valores negativos)
+            titleX=0            # 5. Ajusta na horizontal (0 geralmente funciona bem)
+        )).sort('-x'),
+        color=alt.Color('Defeito',
+                  scale=alt.Scale(range=['blue']), # Define sua paleta de cores aqui
+                  legend=None # Opcional: remove a legenda de cores se for redundante
+                 ),
+                 
+    text='Quantidade'
+    ).properties(
+        width=290,
+        height=350
+    )
+    
+    chart_display = base_display.mark_bar() + base_display.mark_text(align='left', dx=3, color='#000000', fontSize=14)
+    st.altair_chart(chart_display.configure(background='#ffffff00'), use_container_width=True)
+
+def get_qtd_incidentes_planta(df_noc, mes, ano, ka, planta):
+    divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
+    
+    df_filtrado = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+    df_filtrado_n = df_filtrado[df_filtrado['Status'] != 'CANCELADA']
+    dados_planta = {}
+    if ka != 'todos':
+        clientes_permitidos1 = [str(cliente).lower() for cliente in divisoes[ka]]
+        clientes_permitidos = [str(cliente).lower() for cliente in clientes_permitidos1 if cliente not in df_cop['copacker']]
+        mascara_filtragem = df_filtrado_n['Clientes'].str.lower().isin(clientes_permitidos)
+        df_filtrado_cliente = df_filtrado_n[mascara_filtragem]        
+        
+        for tipo in df_filtrado_cliente['Planta']:
+            if tipo not in dados_planta:
+                dados_planta[tipo] = 0 
+            dados_planta[tipo] += 1
+
+        df_filtrado_n["Rotulo do Produto"] = df_filtrado_n["Rotulo do Produto"].fillna('-')
+        for rotulo in df_cop[ka]:
+            df_cop_filtro = df_filtrado_n[df_filtrado_n["Rotulo do Produto"].str.contains(rotulo.upper())]
+            df_cop_filtro2 = df_cop_filtro[df_cop_filtro['Clientes'].str.lower().isin(df_cop['copacker'])]
+            
+            for tipo in df_cop_filtro2['Planta']:
+                if tipo not in dados_planta:
+                    dados_planta[tipo] = 0 
+                dados_planta[tipo] += 1
+
+    if planta:
+        df_filtrado_planta = df_filtrado_n[df_filtrado_n['Planta'].isin(planta)]
+        for tipo in df_filtrado_planta['Planta']:
+                if tipo not in dados_planta:
+                    dados_planta[tipo] = 0 
+                dados_planta[tipo] += 1
+
+    itens_ordenados = sorted(dados_planta.items(), key=lambda item: item[1], reverse=True)
+    top_10_itens = itens_ordenados[:10]
+    source = dict(top_10_itens)
+    df_source = pd.DataFrame(list(source.items()), columns=['Planta', 'Quantidade'])
+
+    df_source['Quantidade'] = df_source['Quantidade'].fillna(0)
+    
+    base_display = alt.Chart(df_source).encode(
+        x=alt.X('Quantidade', title='Quantidade', scale=alt.Scale(nice=True)),
+        y=alt.Y('Planta:N', axis=alt.Axis(
+            labelLimit=600,
+            labelFontSize=14,
+            titleFontSize=16,
+            labelColor="#000000", 
+            titleColor="#000000",
+            titleAngle=0,       # 1. Deixa o título na horizontal
+            titleAlign='left',  # 2. Alinha o texto à esquerda
+            titleAnchor='start',# 3. Define o ponto de "âncora" do texto no início
+            titleY=-20,         # 4. Move o título para CIMA (valores negativos)
+            titleX=0 
+        )).sort('-x'),
+        color=alt.Color('Planta',
+                  scale=alt.Scale(range=['blue']), # Define sua paleta de cores aqui
+                  legend=None # Opcional: remove a legenda de cores se for redundante
+                 ),
+                 
+    text='Quantidade'
+    ).properties(
+        width=290,
+        height=350
+    )
+    
+    chart_display = base_display.mark_bar() + base_display.mark_text(align='left', dx=3, color='#000000', fontSize=14)
+    st.altair_chart(chart_display.configure(background='#ffffff00'), use_container_width=True)
+
+    # st.write(f"{len(df_source["Planta"])}/14")
+    # display_gauge(len(df_source["Planta"]), "QTD de Plantas", "blue")
+
+def get_qtd_clientes(df_noc, mes, ano, ka, planta):
+    divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
+    
+    df_filtrado = filtrar_por_ytd(df_noc, 'DataRecebimentoSAC', mes, ano)
+    dados_clientes = {}
+    df_filtrado_n = df_filtrado[df_filtrado['Status'] != 'CANCELADA']
+    
+    if planta:
+        df_filtrado_planta = df_filtrado_n[df_filtrado_n['Planta'].isin(planta)]
+        for cliente in df_filtrado_planta['Clientes']:
+                if cliente not in dados_clientes:
+                    dados_clientes[cliente] = 0 
+                dados_clientes[cliente] += 1
+
+
+    itens_ordenados = sorted(dados_clientes.items(), key=lambda item: item[1], reverse=True)
+    top_10_itens = itens_ordenados[:5] #10
+    source = dict(top_10_itens)
+    df_source = pd.DataFrame(list(source.items()), columns=['Clientes', 'Quantidade'])
+
+    df_source['Quantidade'] = df_source['Quantidade'].fillna(0)
+    
+    base_display = alt.Chart(df_source).encode(
+        x=alt.X('Quantidade', title='Quantidade', scale=alt.Scale(nice=True)),
+        y=alt.Y('Clientes:N', axis=alt.Axis(
+            labelLimit=600,
+            labelFontSize=14,
+            titleFontSize=16,
+            labelColor="#000000", 
+            titleColor="#000000",    
+            titleAngle=0,       # 1. Deixa o título na horizontal
+            titleAlign='left',  # 2. Alinha o texto à esquerda
+            titleAnchor='start',# 3. Define o ponto de "âncora" do texto no início
+            titleY=-20,         # 4. Move o título para CIMA (valores negativos)
+            titleX=0            # 5. Ajusta na horizontal (0 geralmente funciona bem)
+        )).sort('-x'),
+        color=alt.Color('Clientes',
+                  scale=alt.Scale(range=['blue']), # Define sua paleta de cores aqui
+                  legend=None # Opcional: remove a legenda de cores se for redundante
+                 ),
+                 
+    text='Quantidade'
+    ).properties(
+        width=290,
+        height=350
+    )
+    
+    chart_display = base_display.mark_bar() + base_display.mark_text(align='left', dx=3, color='#000000', fontSize=14)
+    st.altair_chart(chart_display.configure(background='#ffffff00'), use_container_width=True)
+
+def get_qtd_ressarce(df_r_brasil, df_d_brasil, mes, ano, ka):
+    divisoes = st.session_state.dados_carregados.get('divisoes')
+    df_cop = st.session_state.dados_carregados.get('df_cop')
+    vet_ressarce = [0,0,0,0,0,0]
+
+    df_aux_copy = df_r_brasil.copy()
+    df_aux_copy['DataCriacao'] = pd.to_datetime(df_aux_copy['DataCriacao'], format="%d/%m/%Y", dayfirst=True)
+
+    df_filtrado_r = df_r_brasil[(df_aux_copy['DataCriacao'].dt.month <= int(mes)) & (df_aux_copy['DataCriacao'].dt.year == int(ano))]
+    df_filtrado_n = df_filtrado_r[df_filtrado_r['Status'] != 'CANCELADA']
+    
+    if ka != 'todos':
+        clientes_permitidos1 = [str(cliente).lower() for cliente in divisoes[ka]]
+        clientes_permitidos = [str(cliente).lower() for cliente in clientes_permitidos1 if cliente not in df_cop['copacker']]
+    
+        mascara_filtragem = df_filtrado_n['Cliente'].fillna('').str.strip().str.lower().isin(clientes_permitidos)
+        df_filtrado_cliente = df_filtrado_n[mascara_filtragem]        
+        
+        df_filtrado_lata = df_filtrado_cliente[df_filtrado_cliente['Rótulo'].str.contains("LATA|LT", case=False, na=False, regex=True)]
+        vet_ressarce[1] = len(df_filtrado_lata['Cliente'])
+        vet_ressarce[2] = sum(df_filtrado_lata['Dolar'].fillna(0))
+
+        df_filtrado_tampa = df_filtrado_cliente[df_filtrado_cliente['Rótulo'].str.contains("TAMPA|TP", case=False, na=False, regex=True)]
+        vet_ressarce[4] = len(df_filtrado_tampa['Cliente'])
+        vet_ressarce[5] = df_filtrado_tampa['Dolar'].sum()
+
+    df_filtrado_d = filtrar_por_ytd(df_d_brasil, 'DataCriacao', mes, ano)
+    df_filtrado_n = df_filtrado_d[df_filtrado_d['Status'] != 'CANCELADA']
+    
+    if ka != 'todos':
+        clientes_permitidos1 = [str(cliente).lower() for cliente in divisoes[ka]]
+        clientes_permitidos = [str(cliente).lower() for cliente in clientes_permitidos1 if cliente not in df_cop['copacker']]
+        mascara_filtragem = df_filtrado_n['Cliente'].str.strip().str.lower().isin(clientes_permitidos)
+        df_filtrado_cliente = df_filtrado_n[mascara_filtragem]        
+        df_filtrado_lata = df_filtrado_cliente[df_filtrado_cliente['Rótulo'].str.contains("LATA|LT", case=False, na=False, regex=True)]
+        vet_ressarce[0] = len(df_filtrado_lata['Cliente'])
+
+        df_filtrado_tampa = df_filtrado_cliente[df_filtrado_cliente['Rótulo'].str.contains("TAMPA|TP", case=False, na=False, regex=True)]
+        vet_ressarce[3] = len(df_filtrado_tampa['Cliente'])
+    
+    return vet_ressarce
+
+# termo pesquisa para envasador
+
+def display_gauge(value, title, color):
+    """
+    Mostra um medidor (gauge) customizado do Plotly.
+    """
+    fig = go.Figure(go.Indicator(
+        mode = "number",
+        value = value,
+        title = {'text': title, 'font': {'size': 19}},
+        gauge = {
+            'axis': {'range': [None, 80], 'tickwidth': 1, 'tickcolor': "darkblue"},
+            'bar': {'color': color},
+            'bgcolor': "white",
+            'borderwidth': 2,
+            'bordercolor': "gray",
+        }
+    ))
+
+    fig.update_layout(
+        paper_bgcolor = "rgba(0,0,0,0)", # Fundo transparente
+        font = {'color': "darkblue", 'family': "Arial"},
+        height=237
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 def get_flow(nome_df, noc, linha_noc):
     if 'flow_state' not in st.session_state:
@@ -1085,7 +1565,7 @@ def get_flow(nome_df, noc, linha_noc):
 
     elif nome_df == "RessarceBall Paraguai":
         INITIAL_NODES = [
-            StreamlitFlowNode('CONCLUSION DEL COMPENSACIÓN (SAP)', (1800, 250), {'content': 'CONCLUSION DEL COMPENSACIÓN (SAP)'}, 'output', 'left', draggable=False),
+            StreamlitFlowNode('FINALIZADA', (1800, 250), {'content': 'FINALIZADA'}, 'output', 'left', draggable=False),
             # Top Branch
             StreamlitFlowNode('CON DEVOLUCION', (50, 100), {'content': 'CON DEVOLUCION'}, 'input', 'right', draggable=False),
             StreamlitFlowNode('SOLICITAR DEVOLUCION', (300, 100), {'content': 'SOLICITAR DEVOLUCION'}, 'default', 'right', 'left', draggable=False),
@@ -1107,16 +1587,16 @@ def get_flow(nome_df, noc, linha_noc):
             StreamlitFlowEdge('e_top3', 'PENDIENTE C2C/GBS', 'PENDIENTE DE LOGISTICA', animated=False),
             StreamlitFlowEdge('e_top4', 'PENDIENTE DE LOGISTICA', 'PENDIENTE DE EXPEDICION', animated=False),
             StreamlitFlowEdge('e_top5', 'PENDIENTE DE EXPEDICION', 'PENDIENTE DEL COMERCIAL', animated=False),
-            StreamlitFlowEdge('e_top_final', 'PENDIENTE DEL COMERCIAL', 'CONCLUSION DEL COMPENSACIÓN (SAP)', animated=False),
+            StreamlitFlowEdge('e_top_final', 'PENDIENTE DEL COMERCIAL', 'FINALIZADA', animated=False),
             StreamlitFlowEdge('e_bot1', 'SIN DEVOLUCION', 'SOLICITACION DE CARTA DE CREDITO', animated=False),
             StreamlitFlowEdge('e_bot2', 'SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', animated=False),
             StreamlitFlowEdge('e_bot3', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', animated=False),
             StreamlitFlowEdge('e_bot4', 'DATOS DE LO VALOR - PRICING', 'EMISION NOTA DE CREDITO - C2C', animated=False),
             StreamlitFlowEdge('e_bot5', 'EMISION NOTA DE CREDITO - C2C', 'ENVIO AL CLIENTE - CTS', animated=False),
-            StreamlitFlowEdge('e_bot_final', 'ENVIO AL CLIENTE - CTS', 'CONCLUSION DEL COMPENSACIÓN (SAP)', animated=False),
+            StreamlitFlowEdge('e_bot_final', 'ENVIO AL CLIENTE - CTS', 'FINALIZADA', animated=False),
         ]
-        PATH_TOP = ['CON DEVOLUCION', 'SOLICITAR DEVOLUCION', 'PENDIENTE C2C/GBS', 'PENDIENTE DE LOGISTICA', 'PENDIENTE DE EXPEDICION', 'PENDIENTE DEL COMERCIAL', 'CONCLUSION DEL COMPENSACIÓN (SAP)']
-        PATH_BOTTOM = ['SIN DEVOLUCION', 'SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', 'EMISION NOTA DE CREDITO - C2C', 'ENVIO AL CLIENTE - CTS', 'CONCLUSION DEL COMPENSACIÓN (SAP)']
+        PATH_TOP = ['CON DEVOLUCION', 'SOLICITAR DEVOLUCION', 'PENDIENTE C2C/GBS', 'PENDIENTE DE LOGISTICA', 'PENDIENTE DE EXPEDICION', 'PENDIENTE DEL COMERCIAL', 'FINALIZADA']
+        PATH_BOTTOM = ['SIN DEVOLUCION', 'SOLICITACION DE CARTA DE CREDITO', 'VALIDACION DE LA CANTIDAD - CTS', 'DATOS DE LO VALOR - PRICING', 'EMISION NOTA DE CREDITO - C2C', 'ENVIO AL CLIENTE - CTS', 'FINALIZADA']
         PATHS = {'PATH_TOP': PATH_TOP, 'PATH_BOTTOM': PATH_BOTTOM}
 
     current_status_id = linha_noc['Status']
@@ -1178,162 +1658,6 @@ def get_flow(nome_df, noc, linha_noc):
             show_controls=False
         )
 
-def get_mapa():
-    divisoes_pesquisa = {}
-    complaints_data = divisoes_pesquisa
-    # Botão para limpar o estado e recomeçar o processo
-    # if st.sidebar.button("🧹 Limpar Cache e Recomeçar"):
-    #     st.session_state.geocoded_df = pd.DataFrame(columns=["City", "Complaints", "lat", "lon", "Full Address"])
-    #     st.session_state.ambiguous_city = None
-    #     st.session_state.processed_cities = []
-    #     st.rerun()
-
-    # --- 2. Preparação dos Dados de Entrada ---
-    # Limpa e agrega os dados: soma contagens para cidades com o mesmo nome (ignorando maiúsculas/minúsculas)
-    aggregated_data = {}
-    for city, count in complaints_data.items():
-        if isinstance(city, str) and city.lower() != 'nan':
-            # Normaliza o nome da cidade (primeira letra maiúscula)
-            cleaned_city = city.strip().title()
-            aggregated_data[cleaned_city] = aggregated_data.get(cleaned_city, 0) + count
-
-
-    # --- 3. Processo de Geocodificação (Controlado por Estado) ---
-    st.header("1. Geocodificação das Cidades")
-
-    # Se uma cidade ambígua está aguardando resolução, mostre as opções
-    if st.session_state.ambiguous_city:
-        amb_info = st.session_state.ambiguous_city
-        st.warning(f"⚠️ A cidade '{amb_info['name']}' tem múltiplos resultados. Por favor, escolha o correto:")
-        
-        # Formata as opções para serem mais legíveis no selectbox
-        location_options = [loc.address for loc in amb_info['options']]
-        
-        selected_address = st.selectbox(
-            f"Opções para {amb_info['name']}",
-            options=location_options,
-            index=0,
-            key=f"select_{amb_info['name']}"
-        )
-
-        if st.button("Confirmar e Continuar", key="confirm_button"):
-            # Encontra o objeto location completo correspondente à seleção
-            selected_location = next((loc for loc in amb_info['options'] if loc.address == selected_address), None)
-            
-            if selected_location:
-                new_row = {
-                    "City": amb_info['name'],
-                    "Complaints": amb_info['complaints'],
-                    "lat": selected_location.latitude,
-                    "lon": selected_location.longitude,
-                    "Full Address": selected_location.address
-                }
-                # Adiciona a nova linha ao DataFrame no session_state
-                st.session_state.geocoded_df = pd.concat(
-                    [st.session_state.geocoded_df, pd.DataFrame([new_row])], 
-                    ignore_index=True
-                )
-            
-            # Limpa o estado de ambiguidade e reinicia o script para continuar o loop
-            st.session_state.ambiguous_city = None
-            st.rerun()
-
-    # Se não houver cidade ambígua, continue o processo de geocodificação
-    else:
-        if not aggregated_data:
-            st.warning("Sem dados válidos para geocodificar.")
-        else:
-            # Inicializa o geolocator
-            geolocator = Nominatim(user_agent=f"brazil_mapper_app_{time.time()}")
-            geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1, error_wait_seconds=5)
-
-            total_cities_to_process = len([c for c in aggregated_data if c not in st.session_state.processed_cities])
-            if total_cities_to_process > 0:
-                progress_bar = st.progress(0, text="Iniciando geocodificação...")
-                status_text = st.empty()
-                
-                processed_count = 0
-                for city, complaints in aggregated_data.items():
-                    # Pula cidades que já foram processadas nesta sessão
-                    if city in st.session_state.processed_cities:
-                        continue
-
-                    try:
-                        status_text.info(f"Procurando: '{city}'...")
-                        st.session_state.processed_cities.append(city) # Marca como tentada
-                        
-                        locations = geocode(query={'city': city}, exactly_one=False, limit=5, timeout=10)
-
-                        if not locations:
-                            status_text.warning(f"❌ Não foi possível encontrar a cidade: '{city}'.")
-                        
-                        elif len(locations) > 1:
-                            status_text.warning(f"Ambiguidade encontrada para '{city}'. Aguardando sua seleção...")
-                            st.session_state.ambiguous_city = {'name': city, 'complaints': complaints, 'options': locations}
-                            st.rerun() # Reinicia para mostrar o selectbox
-
-                        else: # Exatamente um resultado encontrado
-                            location = locations[0]
-                            new_row = {
-                                "City": city,
-                                "Complaints": complaints,
-                                "lat": location.latitude,
-                                "lon": location.longitude,
-                                "Full Address": location.address
-                            }
-                            st.session_state.geocoded_df = pd.concat(
-                                [st.session_state.geocoded_df, pd.DataFrame([new_row])], 
-                                ignore_index=True
-                            )
-                            status_text.success(f"✔️ {city} encontrada!")
-
-                    except Exception as e:
-                        st.error(f"Erro ao processar '{city}': {e}")
-                    
-                    finally:
-                        processed_count += 1
-                        progress_text = f"Processando... {processed_count}/{total_cities_to_process}"
-                        progress_bar.progress(processed_count / total_cities_to_process, text=progress_text)
-                        time.sleep(1) # Respeita o RateLimiter
-
-                status_text.success("Geocodificação concluída!")
-            else:
-                st.info("Todas as cidades já foram processadas.")
-
-
-    # --- 4. Exibição dos Resultados e do Mapa ---
-    df_final = st.session_state.geocoded_df
-
-    if not df_final.empty:
-        st.header("2. Resultados da Geocodificação")
-        st.dataframe(df_final)
-
-        st.header("3. Mapa de Reclamações")
-        fig = px.scatter_mapbox(
-            df_final,
-            lat="lat",
-            lon="lon",
-            color="Complaints",
-            size="Complaints",
-            hover_name="City",
-            hover_data={"Complaints": True, "Full Address": True, "lat": False, "lon": False},
-            color_continuous_scale=px.colors.sequential.Plasma_r,
-            size_max=30,
-            zoom=3.5,
-            center={"lat": -14.2350, "lon": -51.9253},
-            title="Número de Reclamações por Localização"
-        )
-
-        fig.update_layout(
-            mapbox_style="carto-positron",
-            margin={"r": 0, "t": 40, "l": 0, "b": 0},
-            height=600
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Aguardando dados geocodificados para gerar o mapa.")
-
 def menu_mensal():
         st.write("Selecione o mês e ano desejado:")
         periodo = []
@@ -1346,4 +1670,3 @@ def menu_mensal():
             periodo.append(ano)
         
         return periodo
-
