@@ -2,11 +2,11 @@
     "password_label": "Contraseña",
     "enter_button": "Entrar",
     "wrong_password_error": "😕 Contraseña incorrecta",
-    "page_title": "Quality Review",
-    "login_title": "Login QR Mensual",
-    "login_warning": "Por favor, ingrese la contraseña para acceder a la app de Quality Review.",
-    "main_title": "QUALITY REVIEW MENSUAL",
-    "app_intro": "¡Esta es la app de informes de Quality Review!",
+    "page_title": "CTS Review",
+    "login_title": "Login CTS",
+    "login_warning": "Por favor, ingrese la contraseña para acceder a la app de CTS Review.",
+    "main_title": "CTS REVIEW",
+    "app_intro": "¡Esta es la app de informes de CTS!",
     "file_uploader_header": "1. Cargar Archivos",
     "file_uploader_label": "Navegue a \\16 - SERVIÇO AO CLIENTE\\32. Conexões, y seleccione todos los archivos",
     "file_upload_success": "¡Archivos cargados y procesados con éxito!",
@@ -17,6 +17,7 @@
     "noc_rvt_relation_section_title": "Relación NOC_RVT",
     "search_noc_section_title": "Buscar NOC",
     "search_rvt_section_title": "Buscar RVT",
+    "NPS": "NPS",
     "supervisors_section_title": "Supervisores",
     "analysts_section_title": "Analistas",
     "specialists_section_title": "Especialistas",
@@ -42,7 +43,6 @@
     "search_relation_label": "Buscar Relación (Haga clic en NOC o en RVT)",
     "noc_option": "NOC",
     "rvt_option": "RVT",
-    "NPS": "NPS",
     "type_noc_number_label": "Digite el número de la NOC en el formato a continuación",
     "noc_placeholder": "12345",
     "noc_has_no_rvt_write": "NOC no tiene RVT relacionada. Datos de la NOC:",
@@ -88,5 +88,3 @@
     "select_country": "Seleccione el país",
     "riscos_melhorias": "Riesgos y Mejoras"
 }
-
-
