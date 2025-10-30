@@ -682,7 +682,7 @@ if(login_inicio_c or login_inicio_g):
                     st.subheader("LATAS")
                     colu1, colu2 = st.columns([1,2])
                     with colu1:
-                        st.image(r"data\Picture1.png",width=230)
+                        st.image("data/Picture1.png",width=230)
                     with colu2:
                         
                         col1, col2, col3 = st.columns(3)
@@ -700,8 +700,8 @@ if(login_inicio_c or login_inicio_g):
                     st.subheader("TAMPAS")
                     colu1, colu2 = st.columns([1,2])
                     with colu1:
-                        st.image(r"data\image.png",width=80)
-                        st.image(r"data\Picture2.png",width=255)
+                        st.image("data/image.png",width=80)
+                        st.image("data/Picture2.png",width=255)
                     with colu2:
                         
                         col1, col2, col3 = st.columns(3)
@@ -822,3 +822,4 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
