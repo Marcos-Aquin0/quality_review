@@ -255,11 +255,23 @@ if(login_inicio_c or login_inicio_g):
                 'média de dias': valores
             })
 
+            MAX_WIDTH = 12
+            SEPARATOR = '@'
+            def wrap_label_for_altair(label, width=MAX_WIDTH, sep=SEPARATOR):
+                """Quebra o texto e junta as linhas com o separador."""
+                # O wrap quebra o texto em uma lista de strings
+                wrapped_lines = wrap(label, width=width)
+                # Juntamos as strings com o nosso separador
+                return sep.join(wrapped_lines)
+
+            df_dados_grafico['tipo_'] = df_dados_grafico['tipo'].apply(wrap_label_for_altair)
+
             tipos = alt.Chart(df_dados_grafico).encode(
-                x=alt.X('tipo', axis=alt.Axis(
-                            labelFontSize=14,  
-                            titleFontSize=16,  
-                            labelColor="#000000"    
+                x=alt.X('tipo_', axis=alt.Axis(
+                            labelFontSize=18,      
+                            titleFontSize=14,  
+                            labelColor="#000000" ,
+                            labelExpr=f"split(datum.label, '{SEPARATOR}')"   
                         )),
                 y=alt.Y('média de dias')
             )
@@ -822,4 +834,5 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
