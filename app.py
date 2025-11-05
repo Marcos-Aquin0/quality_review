@@ -5,7 +5,7 @@ from streamlit_option_menu import option_menu
 from dotenv import load_dotenv
 import os
 import json
-
+from textwrap import wrap
 
 load_dotenv()
 
@@ -834,5 +834,6 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
+
 
 
