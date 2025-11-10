@@ -9,7 +9,7 @@ from textwrap import wrap
 
 load_dotenv()
 
-from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qr_cliente_ball_semestre, get_qtd_quality, get_qtd_treinamentos, get_qtd_treinamentos_semestre, get_rvt_by_person, get_tempo_medio_primeiro_atendimento, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_tipos_visitas_rvt_semestre, get_visitas_por_divisao, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt, get_incidentes_nps, get_qtd_latas_tampas, get_qtd_parecer, get_qtd_tratativa, get_qtd_defeitos, get_qtd_incidentes_planta, get_qtd_clientes, get_qtd_ressarce
+from service.functions import menu_mensal, filtrar_por_mes, filtrar_por_ytd, get_incidentes_por_divisao, get_qtd_quality, get_qtd_treinamentos, get_rvt_by_person, get_tempo_resposta, get_time_for_each_level, get_tipos_visitas_rvt, get_visitas_por_divisao, nocs_nao_cadastradas, load_translation, get_text, get_flow, get_tempo_rvt, get_incidentes_nps, get_qtd_latas_tampas, get_qtd_parecer, get_qtd_tratativa, get_qtd_defeitos, get_qtd_incidentes_planta, get_qtd_clientes, get_qtd_ressarce
 from service.connections import processar_arquivos_carregados
 
 
@@ -155,35 +155,32 @@ if(login_inicio_c or login_inicio_g):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
+            option_ytd = periodo[2]
+            if(option_ytd == "YTD"):
+                ytd = 1
+            else:
+                ytd = 0
 
             with st.container(border=True):
                 st.subheader(get_text("rvt_classification_subheader", mes=mes, ano=ano))
-                get_visitas_por_divisao(df_rvt, mes, ano)
+                get_visitas_por_divisao(df_rvt, mes, ano, ytd)
 
             with st.container(border=True):
                 st.subheader(get_text("preventive_corrective_subheader", mes=mes, ano=ano))
-                get_tipos_visitas_rvt(df_rvt, mes, ano)
+                get_tipos_visitas_rvt(df_rvt, mes, ano, ytd)
             
             with st.container(border=True):
                 st.subheader(get_text("training_subheader", mes=mes, ano=ano))
-                get_qtd_treinamentos(df_rvt, mes, ano)
+                get_qtd_treinamentos(df_rvt, mes, ano, ytd)
 
             with st.container(border=True):
                 st.subheader(get_text("quality_reviews_subheader", mes=mes, ano=ano))
-                get_qtd_quality(df_rvt, mes, ano)
+                get_qtd_quality(df_rvt, mes, ano, ytd)
 
             with st.container(border=True):
                 st.subheader(get_text("incidents_subheader", mes=mes, ano=ano))
                 get_incidentes_por_divisao(df_noc, mes, ano)
 
-            # with st.container(border=True):
-            #     st.subheader(f"Tempo médio de primeiro atendimento em dias -{mes}/{ano}")
-            #     col1, col2 = st.columns(2)
-            #     with col1:
-            #         get_tempo_medio_primeiro_atendimento(df_noc, mes, ano)
-            #     with col2:
-            #         st.info("A Data de Recebimento SAC não contém a hora exata de recebimento, apenas o dia, então existe uma margem de erro neste tempo")
-            
         elif selecao_side_bar == get_text("ressarceball_section_title"):
             periodo = menu_mensal()
             mes = periodo[0]
@@ -276,7 +273,7 @@ if(login_inicio_c or login_inicio_g):
                 y=alt.Y('média de dias')
             )
 
-            chart = tipos.mark_bar() + tipos.mark_text(align='center', baseline='bottom', dy=-5, color="#000000", fontSize=15, fontWeight='bold').encode(text=alt.Text('média de dias'))
+            chart = tipos.mark_bar() + tipos.mark_text(align='center', baseline='bottom', dy=-5, color="#000000", fontSize=16, fontWeight='bold').encode(text=alt.Text('média de dias'))
 
             st.altair_chart(chart.properties(height=450, width=700), use_container_width=False)
 
@@ -670,7 +667,7 @@ if(login_inicio_c or login_inicio_g):
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 with st.container(border=True,height=340):
-                    st.write("Incidentes YTD")
+                    st.write("Latas x Tampas")
                     get_incidentes_nps(df_noc, mes, ano, ka, planta)
         
             with col2:
@@ -694,7 +691,7 @@ if(login_inicio_c or login_inicio_g):
                     st.subheader("LATAS")
                     colu1, colu2 = st.columns([1,2])
                     with colu1:
-                        st.image("data/Picture1.png",width=230)
+                        st.image(r"data\Picture1.png",width=230)
                     with colu2:
                         
                         col1, col2, col3 = st.columns(3)
@@ -712,8 +709,8 @@ if(login_inicio_c or login_inicio_g):
                     st.subheader("TAMPAS")
                     colu1, colu2 = st.columns([1,2])
                     with colu1:
-                        st.image("data/image.png",width=80)
-                        st.image("data/Picture2.png",width=255)
+                        st.image(r"data\image.png",width=80)
+                        st.image(r"data\Picture2.png",width=255)
                     with colu2:
                         
                         col1, col2, col3 = st.columns(3)
@@ -834,6 +831,3 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
-
-
-
