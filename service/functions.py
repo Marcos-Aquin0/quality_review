@@ -62,14 +62,6 @@ def clientes_clean(cliente):
     cliente = cliente.lower()
     cliente = unidecode.unidecode(cliente)
     cliente = cliente.replace('\xa0', "").strip()
-    # limpeza realizada no power query
-    # cliente = cliente.replace('.', "").strip()
-    # cliente = cliente.replace('s.a', "sa").strip()
-    # cliente = cliente.replace('s.a.', "sa").strip()
-    # cliente = cliente.replace('&', "").strip()
-    # cliente = cliente.replace('s a', "sa").strip()
-    # cliente = cliente.replace('s r l', "srl").strip()
-    # cliente = cliente.replace('/', "").strip()
     return cliente
   
 def categorizar_divisao(cliente):
@@ -100,25 +92,42 @@ def filtrar_por_ytd(df, campo_data, mes, ano):
     df_aux_copy[campo_data] = pd.to_datetime(df_aux_copy[campo_data], format="%d/%m/%Y", dayfirst=False)
     return df[(df_aux_copy[campo_data].dt.month <= int(mes)) & (df_aux_copy[campo_data].dt.year == int(ano))]
 
-def get_visitas_por_divisao(df_rvt, mes, ano):
-    df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
-    visitas = defaultdict(lambda: defaultdict(int))
+def get_visitas_por_divisao(df_rvt, mes, ano, ytd):
+    if(ytd):
+        df_filtrado = filtrar_por_ytd(df_rvt, 'DataInicio', mes, ano)
+    else:
+        df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
     
+    visitas = defaultdict(lambda: defaultdict(int))
+          
     for index, row in df_filtrado.iterrows():
         cliente = row['Clientes']
         motivo = row['Motivo']
         
         div = categorizar_divisao(cliente)
-        # if div == 'outros':
-        #     print(cliente)
-        # Incrementa total
         visitas[div]['total'] += 1
         
         visitas[div][motivo] += 1
-    st.dataframe(dict(visitas))
+    # st.dataframe(dict(visitas))
+    ka = st.selectbox("selecione um key account", options=[coluna for coluna in visitas.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']])
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1: 
+        display_gauge(visitas[ka]["QUALITY REVIEW"], "QUALITY REVIEW", "blue")
+    with col2: 
+        treinamentos = visitas[ka]["TREINAMENTO CLIENTE"] + visitas[ka]["TREINAMENTO"] + visitas[ka]["TREINAMENTO ON-SITE"] + visitas[ka]["TREINAMENTO FÁBRICA"] + visitas[ka]["TREINAMENTO CTS"] 
+        display_gauge(treinamentos, "TREINAMENTOS", "blue")
+    with col3: 
+        display_gauge(visitas[ka]["SUPORTE TÉCNICO"], "SUPORTE TÉCNICO", "blue")
+    with col4: 
+        display_gauge(visitas[ka]["total"], "TOTAL DE RVTs", "blue")
 
-def get_tipos_visitas_rvt(df_rvt, mes, ano):
-    df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano) #por que data início e não data de criação do RVT?
+def get_tipos_visitas_rvt(df_rvt, mes, ano, ytd):
+    if(ytd):
+        df_filtrado = filtrar_por_ytd(df_rvt, 'DataInicio', mes, ano)
+    else:
+        df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
+    
     dados_atuais = {'preventiva':0, 'corretiva':0}
     for tipo in df_filtrado['Tipo']:
         if tipo == 'PREVENTIVA' or tipo == 'ATENDIMENTO REMOTO - PREVENTIVO':
@@ -131,21 +140,28 @@ def get_tipos_visitas_rvt(df_rvt, mes, ano):
     else: mes = mes-1
     
     # Dados do período anterior
-    df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
+    if(ytd):
+        df_filtrado = filtrar_por_ytd(df_rvt, 'DataInicio', 12, ano)
+    else:
+        df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
+    
     dados_anteriores = {'preventiva':0, 'corretiva':0}
     for tipo in df_filtrado['Tipo']:
-        # dados_anteriores['total'] += 1
         if tipo == 'PREVENTIVA' or tipo == 'ATENDIMENTO REMOTO - PREVENTIVO':
             dados_anteriores['preventiva'] += 1
         else: dados_anteriores['corretiva'] += 1
 
+
     col1, col2 = st.columns(2)
-    with col1:
-        st.write("atual")
-        st.dataframe(dados_atuais)
-    with col2:
-        st.write("mês passado")
-        st.dataframe(dados_anteriores)
+    # with col1:
+    #     st.write("atual")
+    #     st.dataframe(dados_atuais)
+    # with col2:
+    #     if(ytd):
+    #         st.write("ano passado")
+    #     else:
+    #         st.write("mês passado")
+    #     st.dataframe(dados_anteriores)
 
     col1, col2 = st.columns(2)
     col1.metric("Preventiva", dados_atuais['preventiva'], f"{round((dados_atuais['preventiva']*100/dados_anteriores['preventiva'])-100,2) if dados_anteriores['preventiva'] !=0 else 0}% (anterior: {dados_anteriores['preventiva']})")
@@ -195,9 +211,13 @@ def get_tipos_visitas_rvt(df_rvt, mes, ano):
     with col2:
         st.info(get_text("qr_afternoon_chart_info"))
 
-def get_qtd_treinamentos(df_rvt, mes, ano):
+def get_qtd_treinamentos(df_rvt, mes, ano, ytd):
     divisoes = st.session_state.dados_carregados.get('divisoes')
-    df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
+    if(ytd):
+        df_filtrado = filtrar_por_ytd(df_rvt, 'DataInicio', mes, ano)
+    else:
+        df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
+    
     treinamentos = 0
     tipo_treinamento = {'treinamento', 'treinamento cts','treinamento cliente', 'treinamento on-site', 'treinamento fabrica', 'treinamento outros'}
     tipo_treinamentos = defaultdict(int)
@@ -213,13 +233,25 @@ def get_qtd_treinamentos(df_rvt, mes, ano):
             tipo_treinamentos[motivo.lower()] += 1
             treinamentos += 1
         indice +=1
-    col1, col2 = st.columns(2)
-    col1.metric("Treinamentos", treinamentos)
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        display_gauge(treinamentos, "TOTAL", "blue")
     with col2:
-        st.dataframe(tipo_treinamentos)
+        display_gauge(tipo_treinamentos['treinamento cliente'], "Treinamento Cliente", "blue")
+    with col3:
+        display_gauge(tipo_treinamentos['treinamento cts'], "Treinamento CTS", "blue")
+    with col4:
+        display_gauge(tipo_treinamentos['treinamento fabrica'], "Treinamento Fábrica", "blue")
+    with col5:
+        display_gauge(tipo_treinamentos['treinamento on-site'], "Treinamento On-Site", "blue")
+        # st.dataframe(tipo_treinamentos)
 
-def get_qtd_quality(df_rvt, mes, ano):
-    df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
+def get_qtd_quality(df_rvt, mes, ano, ytd):
+    if(ytd):
+        df_filtrado = filtrar_por_ytd(df_rvt, 'DataInicio', mes, ano)
+    else:
+        df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes, ano)
+
     quality = defaultdict(int)
     cidades = {}
     indice = 0
@@ -231,12 +263,16 @@ def get_qtd_quality(df_rvt, mes, ano):
                     cidades[df_filtrado['UnidadesBall'].iloc[indice]] = []
                 quality[div] +=1
                 cidades[df_filtrado['UnidadesBall'].iloc[indice]].append(df_filtrado['DataInicio'].iloc[indice])
+                #     cidades[df_filtrado['UnidadesBall'].iloc[indice]] = 0
+                # quality[div] +=1
+                # cidades[df_filtrado['UnidadesBall'].iloc[indice]] += 1
+            
             else: quality[div] +=1
         indice +=1
     
     df_cidades_lista_datas = pd.DataFrame(list(cidades.items()), columns=['Plantas', 'Datas'])
     st.write(get_text("qr_plants_write"))
-    st.dataframe(df_cidades_lista_datas)
+    st.dataframe(df_cidades_lista_datas, hide_index=True)
     
     source = pd.DataFrame({
         "Categoria": quality.keys(),
@@ -319,9 +355,9 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
                 incidentes_anteriores[div][dict_meses[mes_anteriores]] += 1
             indice += 1
 
-    
-    st.dataframe(incidentes_anteriores, column_order=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]) #incidentes do mes atual
+    # st.dataframe(incidentes_anteriores, column_order=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]) #incidentes do mes atual
     col1, col2, col3 = st.columns(3)
+    colu1, colu2, colu3 = st.columns(3)
     with col1:
         ka = st.selectbox("selecione um key account", options=[coluna for coluna in incidentes_anteriores.keys() if coluna not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']])
           
@@ -338,13 +374,18 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
         df_filtrado_1 = df_filtrado_2[~df_filtrado["Numero NOC"].astype(int).isin(allnocs)]
         df_filtrado_3 = df_filtrado_1[df_filtrado_1["Status"] != "CANCELADA"]
         
-        st.dataframe(df_filtrado_3)
+        st.dataframe(df_filtrado_3, column_order=["Numero NOC", "DataRecebimentoSAC", "Clientes", "Defeito", "Planta"], hide_index=True)
     if(popnoc[ka]):
         st.subheader("Co-packers")
         
         df_cop = df_noc[df_noc["Numero NOC"].astype(int).isin(popnoc[ka])]
-        st.dataframe(df_cop)
+        st.dataframe(df_cop, column_order=["Numero NOC", "DataRecebimentoSAC", "Clientes", "Defeito", "Planta"], hide_index=True)
+        tem_cop = 1
+    else:
+        tem_cop = 0
 
+
+ 
     source = incidentes_anteriores[ka]
     df_source = pd.DataFrame(list(source.items()), columns=['Mês', 'Incidentes'])
 
@@ -406,21 +447,18 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
     with col3:
         st.info(get_text("qr_slide_chart_info"))
         st.info(get_text("filter_info"))
+    
 
-def get_tempo_medio_primeiro_atendimento(df_noc, mes, ano): #parametro julia atendimento
-    df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
-    tempos = []
-    for _, row in df_filtrado.iterrows():
-        try:
-            receb = pd.to_datetime(row['DataRecebimentoSAC'])
-            abertura = pd.to_datetime(row['DataCriacao'], dayfirst=True)
-            if pd.notna(receb) and pd.notna(abertura):
-                tempos.append(abs((abertura - receb).days))
-                
-        except:
-            continue
-    # st.write(tempos)
-    st.write(round(sum(tempos) / len(tempos), 2) if tempos else 0)
+    
+    with colu1:
+        display_gauge(sum(incidentes_anteriores[ka].values()), f"NOCs YTD - {ano}", "blue")
+    with colu2:
+        display_gauge((incidentes_anteriores[ka][dict_meses[mes]]), f"NOCs - {mes}/{ano}", "blue")
+    with colu3:
+        if(tem_cop):
+            display_gauge(len(df_cop), "NOCs Copackers YTD", "blue")
+    
+    # st.subheader("Baixar relatório de NOCs")
 
 def get_time_for_each_level(mes, ano, db, df_noc, coluna_data, tipo_retorno, tempo_resposta_niveis):
     
@@ -455,104 +493,7 @@ def get_time_for_each_level(mes, ano, db, df_noc, coluna_data, tipo_retorno, tem
                         nocs_nao_cadastradas.append(str(noc_na_data))
                     
             indice += 1
-    
-def get_tipos_visitas_rvt_semestre(df_rvt, mes, ano):   
-            if(mes==12): 
-                init= 7
-
-            elif(mes==6): 
-                init=1
-            
-            lista_dados = []
-            soma = {'preventiva':0, 'corretiva':0}
-            for mes_anteriores in range(init, mes+1):
-                df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes_anteriores, ano) #por que data início e não data de criação do RVT?
-                dados_atuais = defaultdict(int)
-                for tipo in df_filtrado['Tipo']:
-                    dados_atuais['total'] += 1
-                    if tipo == 'PREVENTIVA' or tipo == 'ATENDIMENTO REMOTO - PREVENTIVO':
-                        dados_atuais['preventiva'] += 1
-                        soma['preventiva'] += 1
-                    else: 
-                        dados_atuais['corretiva'] += 1
-                        soma['corretiva'] += 1
-                lista_dados.append(dados_atuais)
-
-            # total de visitas, comparar com o semestre anterior
-            mes_data = ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
-            dados_preparados = []
-            for i, dados in enumerate(lista_dados):
-                if(mes==12): 
-                    i+=6
-                dados_preparados.append({"Mês": f"{mes_data[i]}", "Tipo de Visita": "Corretiva", "Quantidade": dados["corretiva"]})
-                dados_preparados.append({"Mês": f"{mes_data[i]}", "Tipo de Visita": "Preventiva", "Quantidade": dados["preventiva"]})
-
-            df_grafico = pd.DataFrame(dados_preparados)
-
-            df_grafico['Mês'] = pd.Categorical(df_grafico['Mês'], categories=mes_data, ordered=True)
-            df_grafico = df_grafico.sort_values('Mês')
-
-            st.subheader(f"Preventiva vs Corretiva no {int(mes/6)}º Semestre de {ano}")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                base = alt.Chart(df_grafico).encode(
-                x=alt.X('Mês'),
-                y=alt.Y('Quantidade'),
-                color=alt.Color('Tipo de Visita',
-                                sort='descending',
-                                scale=alt.Scale(range=['#90CAF9', '#1976D2']),
-                                legend=alt.Legend(title="Tipo de Visita"))
-                )
-                bars = base.mark_bar().encode(
-                    order=alt.Order('Tipo de Visita', sort='ascending')
-                )
-
-                text = alt.Chart(df_grafico).mark_text(
-                    align='center',
-                    baseline='bottom', 
-                    dy=-7,
-                    color='black'
-                ).encode(
-                    x=alt.X('Mês'),
-                    y=alt.Y('sum(Quantidade):Q', title="Quantidade"),   
-                    text=alt.Text('sum(Quantidade)', format='.0f')
-                )
-
- 
-                chart = (bars + text).properties(
-                    width=450,
-                    height=300
-                )
-
-                st.altair_chart(chart)
-            
-            if(mes==12): 
-                init=1
-                mes=6
-            elif(mes==6): 
-                init=7
-                mes=12
-                ano = ano-1
-            
-            lista_dados_anteriores = []
-            soma_anteriores = {'preventiva':0, 'corretiva':0}
-            for mes_anteriores in range(init, mes+1):
-                df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes_anteriores, ano) 
-                dados_anteriores = defaultdict(int)
-                for tipo in df_filtrado['Tipo']:
-                    dados_anteriores['total'] += 1
-                    if tipo == 'PREVENTIVA' or tipo == 'ATENDIMENTO REMOTO - PREVENTIVO':
-                        dados_anteriores['preventiva'] += 1
-                        soma_anteriores['preventiva'] += 1
-                    else: 
-                        dados_anteriores['corretiva'] += 1
-                        soma_anteriores['corretiva'] += 1
-                lista_dados_anteriores.append(dados_anteriores)
-            
-            
-            col2.metric("Total de Visitas Preventivas", soma['preventiva'], f"{round((soma['preventiva']*100/soma_anteriores['preventiva'])-100,2) if soma_anteriores['preventiva'] else 0}% (anterior: {soma_anteriores['preventiva']})")
-            col3.metric("Total de Visitas Corretivas", soma['corretiva'], f"{round((soma['corretiva']*100/soma_anteriores['corretiva'])-100,2) if soma_anteriores['corretiva'] else 0}% (anterior: {soma_anteriores['corretiva']})", "inverse")
-            
+               
 def get_rvt_by_person(df_rvt, mes, ano, ytd):
     df_time = st.session_state.dados_carregados.get('df_time')
     mes_data = ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -637,119 +578,7 @@ def get_rvt_by_person(df_rvt, mes, ano, ytd):
         st.altair_chart(chart_anonimo.configure(background="#ffffffff"))
     with col2:
         st.altair_chart(chart_source.configure(background="#ffffffff"))
-
-def get_qr_cliente_ball_semestre(df_rvt, mes, ano):   
-    if(mes==12): 
-        init= 7
-
-    elif(mes==6): 
-        init=1
-    
-    lista_dados = []
-    soma = {'ball':0, 'cliente':0}
-    for mes_anteriores in range(init, mes+1):
-        df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes_anteriores, ano) #por que data início e não data de criação do RVT?
-        dados_atuais = defaultdict(int)
-        indice = 0
-        for motivo in df_filtrado['Motivo']:
-            if motivo == "QUALITY REVIEW":
-                if "BALL" in df_filtrado['Clientes'].iloc[indice]:
-                    dados_atuais['ball'] += 1
-                    soma['ball'] += 1
-                else: 
-                    dados_atuais['cliente'] += 1
-                    soma['cliente'] += 1
-            indice += 1
-        lista_dados.append(dados_atuais)
-
-    # total de visitas, comparar com o semestre anterior
-    mes_data = ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
-    dados_preparados = []
-    for i, dados in enumerate(lista_dados):
-        if(mes==12): 
-            i+=5
-        dados_preparados.append({"Mês": f"{mes_data[i]}", "QR": "Ball", "Quantidade": dados["ball"]})
-        dados_preparados.append({"Mês": f"{mes_data[i]}", "QR": "Cliente", "Quantidade": dados["cliente"]})
-
-    df_grafico = pd.DataFrame(dados_preparados)
-
-    df_grafico['Mês'] = pd.Categorical(df_grafico['Mês'], categories=mes_data, ordered=True)
-    df_grafico = df_grafico.sort_values('Mês')
-
-    st.subheader(f"QR em Cliente e Ball no {int(mes/6)}º Semestre de {ano}")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        base = alt.Chart(df_grafico).encode(
-        x=alt.X('Mês'),
-        y=alt.Y('Quantidade'),
-        color=alt.Color('QR',
-                        sort='descending',
-                        scale=alt.Scale(range=['#90CAF9', '#1976D2']),
-                        legend=alt.Legend(title="QR"))
-        )
-        bars = base.mark_bar().encode(
-            order=alt.Order('QR', sort='ascending')
-        )
-
-        text = base.mark_text(
-            align='center',
-            baseline='bottom',
-            dy=-2,  
-            color='black'
-        ).encode(
-            y=alt.Y('sum(Quantidade):Q', title="Quantidade"),  
-            text=alt.Text('sum(Quantidade):Q', format='.0f'),
-            color=alt.value('black') 
-        )
-        limit_df = pd.DataFrame({'limit_value': [13.0]})
-        limit_line = alt.Chart(limit_df).mark_rule(
-            color='red',
-            strokeWidth=2,
-            strokeDash=[5, 3] 
-        ).encode(
-            y='limit_value:Q'
-        )
-
-        chart = (bars + text + limit_line).properties(
-            width=450,
-            height=300
-        )
-
-        st.altair_chart(chart)
-    
-    col2.metric("Total de QR Ball", soma['ball'])
-    col3.metric("Total de QR Cliente", soma['cliente'])
-    
-def get_qtd_treinamentos_semestre(df_rvt, mes, ano):
-    divisoes = st.session_state.dados_carregados.get('divisoes')
-    if(mes==12): 
-        init= 7
-
-    elif(mes==6): 
-        init=1
-
-    treinamentos = 0
-    tipo_treinamento = {'treinamento', 'treinamento cts','treinamento cliente', 'treinamento on-site', 'treinamento fabrica', 'treinamento outros'}
-    tipo_treinamentos = defaultdict(int)
-    for mes_anteriores in range(init, mes+1):
-        df_filtrado = filtrar_por_mes(df_rvt, 'DataInicio', mes_anteriores, ano) #por que data início e não data de criação do RVT?
-        indice = 0
-        for motivo in df_filtrado['Motivo']:
-            if(str(motivo).lower() == 'treinamento'):
-                if(str(df_filtrado['Clientes'].iloc[indice]).lower() in divisoes['planta_ball']):
-                    tipo_treinamentos['treinamento fabrica'] +=1
-                else:
-                    tipo_treinamentos['treinamento cliente'] +=1
-                treinamentos +=1
-            elif(str(motivo).lower() in tipo_treinamento):
-                tipo_treinamentos[str(motivo).lower()] += 1
-                treinamentos += 1
-            indice +=1 
-    col1, col2 = st.columns(2)
-    col1.metric("Treinamentos", treinamentos)
-    with col2:
-        st.dataframe(tipo_treinamentos)
-
+   
 def calcular_tempo(data_inicio, data_fim):
         """Calcula a diferença em dias. Retorna '-' se alguma data for inválida."""
         # pd.to_datetime lida com a conversão e com valores nulos (NaT)
@@ -1661,12 +1490,15 @@ def get_flow(nome_df, noc, linha_noc):
 def menu_mensal():
         st.write("Selecione o mês e ano desejado:")
         periodo = []
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             mes = st.number_input("Insira o mês (número)",min_value=1, max_value=12, step=1)
             periodo.append(mes)
         with col2:
             ano = st.number_input("Insira o ano",min_value=2023, step=1)
             periodo.append(ano)
+        with col3:
+            option_ytd = st.selectbox("Mensal ou YTD: ", ["Mensal", "YTD"])
+            periodo.append(option_ytd)
         
         return periodo
