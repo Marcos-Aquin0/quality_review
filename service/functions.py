@@ -430,7 +430,7 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
     chart_for_download = base_download.mark_bar(color="#fefefe") + base_download.mark_text(align='left', dx=2, color='#ffffff', fontSize=16, fontWeight='bold')
     chart_for_download = chart_for_download.configure(background='#ffffff00')
     png_buffer = io.BytesIO()
-    chart_for_download.save(png_buffer, format='png')
+    chart_for_download.save(png_buffer, format='png', engine='vl-convert')
 
     with col1:
         st.download_button(
@@ -1502,3 +1502,4 @@ def menu_mensal():
             periodo.append(option_ytd)
         
         return periodo
+
