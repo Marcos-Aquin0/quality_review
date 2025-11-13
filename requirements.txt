@@ -1,5 +1,4 @@
 pandas
-altair
 streamlit-option-menu
 python-dotenv
 dotenv
@@ -8,4 +7,5 @@ plotly
 openpyxl
 vl-convert-python
 streamlit-flow-component
+altair<5
 
