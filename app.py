@@ -631,12 +631,24 @@ if(login_inicio_c or login_inicio_g):
             periodo = menu_mensal()
             mes = periodo[0]
             ano = periodo[1]
+            
+            option_ytd = periodo[2]  # Novo parâmetro vindo do menu
+
+            # Define flag YTD
+            ytd = 1 if option_ytd == "YTD" else 0
+
             tab1, tab2 = st.tabs(["⛑️Riscos de Segurança", "🔨Oportunidades de Melhoria"])
             with tab1:
-                df_filtrado_riscos = filtrar_por_mes(df_riscos, "DataCriacao", mes, ano)
+                if option_ytd == "YTD":
+                    df_filtrado_riscos = filtrar_por_ytd(df_riscos, "DataCriacao", mes, ano)
+                else:
+                    df_filtrado_riscos = filtrar_por_mes(df_riscos, "DataCriacao", mes, ano)
                 st.dataframe(df_filtrado_riscos, hide_index=True)
-            with tab2:    
-                df_filtrado_melhorias = filtrar_por_mes(df_melhorias, "DataCriacao", mes, ano)
+            with tab2:
+                if option_ytd == "YTD":
+                    df_filtrado_melhorias = filtrar_por_ytd(df_melhorias, "DataCriacao", mes, ano)
+                else:    
+                    df_filtrado_melhorias = filtrar_por_mes(df_melhorias, "DataCriacao", mes, ano)
                 st.dataframe(df_filtrado_melhorias, hide_index=True)
 
         elif selecao_side_bar == get_text("NPS"):
