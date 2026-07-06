@@ -319,6 +319,7 @@ def get_qtd_quality(df_rvt, mes, ano, ytd):
     with col2:
         st.info(get_text("qr_afternoon_chart_info"))
 
+
 def get_incidentes_por_divisao(df_noc, mes, ano):
     divisoes = st.session_state.dados_carregados.get('divisoes')
     df_cop = st.session_state.dados_carregados.get('df_cop')
@@ -471,14 +472,27 @@ def get_time_for_each_level(mes, ano, db, df_noc, coluna_data, tipo_retorno, tem
     indice = 0
     for data in df_filtrado[coluna_data]:
         if(df_filtrado['Status'].iloc[indice] != 'CANCELADA'):
+
+            legacy_case = df_noc['Legacy CaseNumber'].iloc[indice]
+                        
+            if pd.isna(legacy_case) or str(legacy_case).strip() == "":
+                num_noc = 'Numero NOC'
+            else:
+                num_noc = 'Legacy CaseNumber'
+            
+
             noc_na_data = df_filtrado['Numero NOC'].iloc[indice]
             if(noc_na_data):
-                df_noc['Numero NOC'] = pd.to_numeric(df_noc['Numero NOC'], errors='coerce')
+                df_noc[num_noc] = pd.to_numeric(df_noc[num_noc], errors='coerce')
                 noc_a_buscar = pd.to_numeric(noc_na_data, errors='coerce')
-                df_filtro_noc = df_noc[df_noc['Numero NOC'] == noc_a_buscar]
+                df_filtro_noc = df_noc[df_noc[num_noc] == noc_a_buscar]
                 if not df_filtro_noc.empty:
                     data_sac = df_filtro_noc['DataRecebimentoSAC'].iloc[0]
-                    data_sac = datetime.strptime(str(data_sac), '%d/%m/%Y').date()
+                    if pd.isna(data_sac):
+                        continue
+                    else:
+                        data_sac = datetime.strptime(str(data_sac), '%d/%m/%Y').date()
+
                     formatos = ['%Y/%m/%d %H:%M:%S', '%Y-%m-%d %H:%M:%S', '%d/%m/%Y', "%d/%m/%Y %H:%M:%S"]
                     for fmt in formatos:
                         try:
@@ -607,7 +621,19 @@ def get_tempo_resposta(df_filtro):
 
     # .iterrows() permite acessar o índice e os dados de cada linha.
     for _, linha_sup in df_filtro.iterrows():
-        noc = linha_sup['Numero NOC']
+        
+        
+            
+        legacy_case = linha_sup['Legacy CaseNumber']
+
+        if pd.isna(legacy_case) or str(legacy_case).strip() == "":
+            noc = linha_sup['Numero NOC']
+            coluna_busca = 'Numero NOC'
+        else:
+            noc = legacy_case
+
+
+        
         data_recebimento = linha_sup['DataRecebimentoSAC']
         encontrado = False
 
@@ -620,8 +646,12 @@ def get_tempo_resposta(df_filtro):
                 linha_maior_id = df_filtro_noc.loc[df_filtro_noc['ID'].idxmax()]
 
                 # st.dataframe(df_filtro_noc)
+                if linha_maior_id['StatusFinal'] == "":
+                    data_final = linha_maior_id['DataModificacao']
+                else:
+                    data_final = linha_maior_id['StatusFinal']
+                
 
-                data_final = linha_maior_id['StatusFinal']
                 tempo = calcular_tempo(data_recebimento, data_final)
                 if(tempo != "-"):
                     lista_tempo_resposta.append({

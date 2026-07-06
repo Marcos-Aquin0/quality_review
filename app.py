@@ -842,6 +842,8 @@ if(login_inicio_c or login_inicio_g):
                 st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome1, role="ka"))
                 get_tempo_resposta(df_filtro_ka_ytd)
 
+                
+
     else:
         st.warning(get_text("upload_warning"))
 
