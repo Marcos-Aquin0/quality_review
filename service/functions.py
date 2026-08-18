@@ -337,6 +337,10 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
             if(dict_meses[mes_anteriores] not in incidentes_anteriores[div]):
                 incidentes_anteriores[div][dict_meses[mes_anteriores]] = 0
         for cliente in df_filtrado['Clientes']:
+            noc_informativa = str(df_filtrado['NOCInformativa'].iloc[indice]).strip().upper()
+            if noc_informativa == 'SIM':
+                indice += 1
+                continue
             
             if str(cliente).lower() in df_cop['copacker']:
                 for divisao in df_cop.keys():
@@ -373,7 +377,10 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
         st.write(f"Incidentes - {ka} - {mes_anteriores}/{ano}")
         df_filtrado_2 = df_filtrado[mascara_filtragem]
         df_filtrado_1 = df_filtrado_2[~df_filtrado["Numero NOC"].astype(int).isin(allnocs)]
-        df_filtrado_3 = df_filtrado_1[df_filtrado_1["Status"] != "CANCELADA"]
+        df_filtrado_3 = df_filtrado_1[
+            (df_filtrado_1["Status"] != "CANCELADA") &
+            (df_filtrado_1["NOCInformativa"].fillna("").astype(str).str.strip().str.upper() != "SIM")
+        ]
         
         st.dataframe(df_filtrado_3, column_order=["Numero NOC", "DataRecebimentoSAC", "Clientes", "Defeito", "Planta"], hide_index=True)
     if(popnoc[ka]):
