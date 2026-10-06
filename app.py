@@ -29,6 +29,16 @@ def check_password():
             st.session_state["password_correct_c"] = False
             st.error(get_text("wrong_password_error"))
 
+def filtrar_por_cliente(df, texto):
+    if not texto.strip():
+        return df
+
+    return df.loc[
+        df['Clientes'].fillna('').astype(str).str.contains(
+            texto.strip(), case=False, regex=False
+        )
+    ].copy()
+
 if st.session_state.get("password_correct_g", False):
     login_inicio_g = 1
     login_inicio_c = 0
@@ -576,6 +586,13 @@ if(login_inicio_c or login_inicio_g):
                 selection = st.segmented_control(
                     "Key Accounts", options, selection_mode="single"
                 )
+                busca_cliente = ""
+                if selection:
+                    busca_cliente = st.text_input(
+                        get_text("client_filter_label"),
+                        placeholder=get_text("client_filter_placeholder"),
+                        key="response_time_client_filter"
+                    )
                 
                 st.write(get_text("key_accounts_clients_write"))
                 df_filtrado = filtrar_por_mes(df_noc, 'DataRecebimentoSAC', mes, ano)
@@ -604,6 +621,7 @@ if(login_inicio_c or login_inicio_g):
                         #por cliente
                         lista_em_maiusculo = [cliente.upper() for cliente in divisoes[selection]]
                         df_filtro_ka = df_filtrado_aprovacao[df_filtrado_aprovacao['Clientes'].isin(lista_em_maiusculo)]
+                        df_filtro_ka = filtrar_por_cliente(df_filtro_ka, busca_cliente)
                         # df_filtro_kaa = df_filtrado[df_filtrado['Clientes'].isin(lista_em_maiusculo)]
                         # st.dataframe(df_filtro_kaa)
                         st.dataframe(df_filtro_ka.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])
@@ -623,6 +641,7 @@ if(login_inicio_c or login_inicio_g):
                         df_filtrado_tipo_ytd = df_filtrado_status2_ytd[df_filtrado_status2_ytd['Tipo de NOC'] == 'EXTERNA']
                         df_filtrado_aprovacao_ytd = df_filtrado_tipo_ytd[df_filtrado_tipo_ytd["AprovacaoInvestigacao"] == "APROVADA"]
                         df_filtro_ka_ytd = df_filtrado_aprovacao_ytd[df_filtrado_aprovacao_ytd['Clientes'].isin(lista_em_maiusculo)]
+                        df_filtro_ka_ytd = filtrar_por_cliente(df_filtro_ka_ytd, busca_cliente)
                         st.info(get_text("ytd_info_text", mes=mes, ano=ano, nome=nome, role="ka"))
                         st.dataframe(df_filtro_ka_ytd)
                         st.dataframe(df_filtro_ka_ytd.drop_duplicates(subset=['CodigoCliente']), column_order=["CodigoCliente", "Clientes", "Termo_pesquisa"])    
@@ -772,7 +791,6 @@ if(login_inicio_c or login_inicio_g):
                 st.subheader("YTD")
                 get_rvt_by_person(df_rvt, mes, ano, 1)
 
-
             options = [div for div in divisoes.keys() if div not in ['planta_ball','outros', 'argentina', 'chile', 'paraguai', 'bolivia', 'peru', 'copacker']]
             df_time_filtrado = df_time[df_time['Divisão'] == 'Gerente']
             options1 = df_time_filtrado["KA"].iloc[0]
@@ -846,4 +864,3 @@ if(login_inicio_c or login_inicio_g):
 
     else:
         st.warning(get_text("upload_warning"))
-

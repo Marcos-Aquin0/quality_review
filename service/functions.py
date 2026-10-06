@@ -472,53 +472,96 @@ def get_incidentes_por_divisao(df_noc, mes, ano):
     
     # st.subheader("Baixar relatório de NOCs")
 
-def get_time_for_each_level(mes, ano, db, df_noc, coluna_data, tipo_retorno, tempo_resposta_niveis):
-    
+def get_time_for_each_level(
+    mes,
+    ano,
+    db,
+    df_noc,
+    coluna_data,
+    tipo_retorno,
+    tempo_resposta_niveis
+):
+
     df_filtrado = filtrar_por_mes(db, coluna_data, mes, ano)
-    df_filtrado_can = df_filtrado[df_filtrado['Status'] != 'CANCELADA']
-    indice = 0
-    for data in df_filtrado[coluna_data]:
-        if(df_filtrado['Status'].iloc[indice] != 'CANCELADA'):
 
-            legacy_case = df_noc['Legacy CaseNumber'].iloc[indice]
-                        
-            if pd.isna(legacy_case) or str(legacy_case).strip() == "":
-                num_noc = 'Numero NOC'
-            else:
-                num_noc = 'Legacy CaseNumber'
-            
+    # Converte uma única vez
+    df_noc['Numero NOC'] = pd.to_numeric(
+        df_noc['Numero NOC'],
+        errors='coerce'
+    )
 
-            noc_na_data = df_filtrado['Numero NOC'].iloc[indice]
-            if(noc_na_data):
-                df_noc[num_noc] = pd.to_numeric(df_noc[num_noc], errors='coerce')
-                noc_a_buscar = pd.to_numeric(noc_na_data, errors='coerce')
-                df_filtro_noc = df_noc[df_noc[num_noc] == noc_a_buscar]
-                if not df_filtro_noc.empty:
-                    data_sac = df_filtro_noc['DataRecebimentoSAC'].iloc[0]
-                    if pd.isna(data_sac):
-                        continue
-                    else:
-                        data_sac = datetime.strptime(str(data_sac), '%d/%m/%Y').date()
+    df_noc['Legacy CaseNumber'] = pd.to_numeric(
+        df_noc['Legacy CaseNumber'],
+        errors='coerce'
+    )
 
-                    formatos = ['%Y/%m/%d %H:%M:%S', '%Y-%m-%d %H:%M:%S', '%d/%m/%Y', "%d/%m/%Y %H:%M:%S"]
-                    for fmt in formatos:
-                        try:
-                            data = datetime.strptime(str(data), fmt).date()
-                            break
-                        except ValueError:
-                            pass
-                    
-                    diferenca = data - data_sac
-                    diferenca = diferenca.days
-                    tempo_resposta_niveis[tipo_retorno]['acumulado'] += diferenca
-                    tempo_resposta_niveis[tipo_retorno]['qtd'] += 1
-                
-                else:
-                    if(str(noc_na_data) not in nocs_nao_cadastradas):
-                        nocs_nao_cadastradas.append(str(noc_na_data))
-                    
-            indice += 1
-               
+    formatos = [
+        '%Y/%m/%d %H:%M:%S',
+        '%Y-%m-%d %H:%M:%S',
+        '%d/%m/%Y',
+        '%d/%m/%Y %H:%M:%S'
+    ]
+
+    for _, linha in df_filtrado.iterrows():
+
+        if linha['Status'] == 'CANCELADA':
+            continue
+
+        noc_na_data = linha['Numero NOC']
+
+        if pd.isna(noc_na_data):
+            continue
+
+        noc_a_buscar = pd.to_numeric(noc_na_data, errors='coerce')
+
+        # Procura tanto no Numero NOC quanto no Legacy
+        df_filtro_noc = df_noc[
+            (df_noc['Numero NOC'] == noc_a_buscar) |
+            (df_noc['Legacy CaseNumber'] == noc_a_buscar)
+        ]
+
+        if df_filtro_noc.empty:
+
+            if str(noc_na_data) not in nocs_nao_cadastradas:
+                nocs_nao_cadastradas.append(str(noc_na_data))
+
+            continue
+
+        data_sac = df_filtro_noc['DataRecebimentoSAC'].iloc[0]
+
+        if pd.isna(data_sac):
+            continue
+
+        try:
+            data_sac = datetime.strptime(
+                str(data_sac),
+                '%d/%m/%Y'
+            ).date()
+        except:
+            continue
+
+        data_evento = linha[coluna_data]
+
+        data_convertida = None
+
+        for fmt in formatos:
+            try:
+                data_convertida = datetime.strptime(
+                    str(data_evento),
+                    fmt
+                ).date()
+                break
+            except ValueError:
+                pass
+
+        if data_convertida is None:
+            continue
+
+        diferenca = (data_convertida - data_sac).days
+
+        tempo_resposta_niveis[tipo_retorno]['acumulado'] += diferenca
+        tempo_resposta_niveis[tipo_retorno]['qtd'] += 1
+
 def get_rvt_by_person(df_rvt, mes, ano, ytd):
     df_time = st.session_state.dados_carregados.get('df_time')
     mes_data = ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]

@@ -60,6 +60,8 @@
     "key_accounts_clients_write": "Clientes por Key Account",
     "month_info_text": "Essas são as NOCs que não foram Canceladas, não estão em Preenchimento, são Externas e foram Aprovadas no período {mes}/{ano} para o {role} {nome}",
     "response_time": "Tempo de resposta",
+    "client_filter_label": "Filtrar por nome do cliente",
+    "client_filter_placeholder": "Digite parte do nome do cliente",
     "rvt_time": "Tempo de 1º Contato",
     "response_time_subheader": "Tempo de resposta - {mes}/{ano}",
     "ytd_response_time_subheader": "TEMPO DE RESPOSTA - YTD",
